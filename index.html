@@ -1,0 +1,1986 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Court IQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --or:#FF6B1A;--or2:#FF8142;--ord:rgba(255,107,26,0.15);
+  --bg:#0A0A0F;--c1:#1C1C24;--c2:#22222E;
+  --tx:#F0EDE8;--mu:rgba(240,237,232,0.5);--di:rgba(240,237,232,0.25);
+  --b1:rgba(255,107,26,0.2);--b2:rgba(240,237,232,0.1);
+  --bl:#378ADD;--tl:#1D9E75;--pu:#7F77DD;--gn:#63C74D;--rd:#E24B4A;
+}
+body{background:var(--bg);color:var(--tx);font-family:'Barlow',sans-serif;min-height:100vh}
+button{cursor:pointer;font-family:'Barlow',sans-serif}
+input,select,textarea{font-family:'Barlow',sans-serif;box-sizing:border-box}
+
+/* ── NAV ── */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--b1);position:sticky;top:0;background:var(--bg);z-index:100;gap:10px;flex-wrap:wrap}
+.logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:.04em}
+.logo span{color:var(--or)}
+.nav-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rbadge{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:20px;background:var(--ord);color:var(--or)}
+.rbadge.cust{background:rgba(55,138,221,0.15);color:var(--bl)}
+.ntabs{display:flex;gap:3px;background:var(--c1);border-radius:8px;padding:3px;flex-wrap:wrap}
+.tab{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:.07em;text-transform:uppercase;padding:6px 11px;border-radius:6px;border:none;background:transparent;color:var(--mu);transition:all .15s}
+.tab.on{background:var(--or);color:#0A0A0F}
+.tab:hover:not(.on){color:var(--tx);background:var(--ord)}
+.swbtn{font-size:10px;padding:5px 10px;border-radius:6px;border:1px solid var(--b2);background:transparent;color:var(--di);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.swbtn:hover{color:var(--tx);border-color:var(--mu)}
+
+/* ── ROLE SCREEN ── */
+#roleScreen,#playerPickerScreen,#playerCreateScreen{background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;gap:20px}
+.rl{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:38px;letter-spacing:.04em}
+.rl span{color:var(--or)}
+.rsub{font-size:14px;color:var(--mu);text-align:center;max-width:340px}
+.rcards{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;width:100%;max-width:520px}
+.rcard{flex:1;min-width:190px;background:var(--c1);border-radius:14px;padding:26px 20px;text-align:center;border:2px solid transparent;cursor:pointer;transition:all .2s}
+.rcard:hover{border-color:var(--or);background:var(--c2);transform:translateY(-3px)}
+.rcard .ri{font-size:38px;margin-bottom:10px}
+.rcard .rt{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:21px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.rcard .rs{font-size:12px;color:var(--mu);line-height:1.5}
+
+/* ── VIEWS ── */
+.view{display:none;padding:20px}
+.view.on{display:block}
+
+/* ── THREE-COL LAYOUT ── */
+.tcols{display:grid;grid-template-columns:200px minmax(0,1fr) 220px;gap:0;border:1px solid var(--b2);border-radius:12px;overflow:hidden;background:var(--c1);height:600px}
+.tcol{overflow-y:auto}
+.tcol::-webkit-scrollbar{width:3px}
+.tcol::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+.tc-l{background:var(--c1);border-right:1px solid var(--b2)}
+.tc-c{background:var(--c2)}
+.tc-r{background:var(--c1);border-left:1px solid var(--b2)}
+.tchdr{padding:10px 13px 8px;border-bottom:1px solid var(--b2);display:flex;align-items:baseline;justify-content:space-between;position:sticky;top:0;background:inherit;z-index:2}
+.tcht{font-size:11px;font-weight:600;color:var(--tx);text-transform:uppercase;letter-spacing:.06em}
+.tchs{font-size:11px;color:var(--di)}
+
+/* ── DRILL LIST ── */
+.di{padding:9px 12px;cursor:pointer;border-left:2px solid transparent;border-bottom:1px solid var(--b2);transition:background .1s}
+.di:last-child{border-bottom:none}
+.di:hover{background:var(--c2)}
+.di.sel{background:rgba(255,107,26,.08);border-left-color:var(--or)}
+.di.fin{opacity:.4}
+.diname{font-size:12px;color:var(--tx);font-weight:500;line-height:1.3;margin-bottom:3px}
+.dimeta{font-size:11px;color:var(--di);margin-bottom:4px}
+.dtag{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;display:inline-block}
+.tor{background:rgba(255,107,26,.12);color:#CC5200}
+.tbl{background:rgba(55,138,221,.15);color:#0C447C}
+.ttl{background:rgba(29,158,117,.15);color:#085041}
+.tpu{background:rgba(127,119,221,.15);color:#3C3489}
+.tgy{background:var(--c2);color:var(--mu)}
+
+/* ── CENTER PANE ── */
+.cp{padding:14px}
+.ptitle{font-size:17px;font-weight:500;color:var(--tx);margin-bottom:3px;line-height:1.2;font-family:'Barlow Condensed',sans-serif;letter-spacing:.02em;text-transform:uppercase}
+.psub{font-size:12px;color:var(--mu);line-height:1.5;margin-bottom:12px}
+.pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.pill{font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--b2);color:var(--mu);background:var(--c1);display:inline-flex;align-items:center;gap:4px}
+.pill.or{border-color:rgba(255,107,26,.3);color:var(--or);background:rgba(255,107,26,.06)}
+.div{height:1px;background:var(--b2);margin:0 0 12px}
+.stl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--di);margin-bottom:7px}
+.srow{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--mu);line-height:1.5;padding:5px 0;border-bottom:1px solid var(--b2)}
+.srow:last-child{border-bottom:none}
+.srow.arow{color:var(--tx);font-weight:500}
+.snum{width:17px;height:17px;border-radius:50%;background:var(--b2);font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--di)}
+.snum.a{background:var(--or);color:#0A0A0F}
+.snum.d{background:rgba(29,158,117,.2);color:var(--tl)}
+.wrow{display:flex;gap:7px;align-items:flex-start;font-size:12px;color:var(--mu);line-height:1.5;padding:4px 0}
+.werr{color:var(--rd)}.wok{color:var(--tl)}.whi{color:#EF9F27}
+
+/* ── TIMER ── */
+.twrap{display:flex;flex-direction:column;align-items:center;padding:16px 0 12px;background:var(--c1);border-radius:10px;border:1px solid var(--b2);margin-bottom:11px}
+.tring{position:relative;width:120px;height:120px;margin-bottom:10px}
+.tring svg{position:absolute;top:0;left:0;transform:rotate(-90deg)}
+.tnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.tbig{font-size:30px;font-weight:500;color:var(--tx);line-height:1;font-variant-numeric:tabular-nums;font-family:'Barlow Condensed',sans-serif;letter-spacing:.02em}
+.tsub{font-size:11px;color:var(--di);margin-top:2px}
+.tbtns{display:flex;gap:7px;align-items:center}
+.tbtn{width:33px;height:33px;border-radius:50%;border:1px solid var(--b2);background:var(--c1);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--mu)}
+.tbtn:hover{background:var(--c2)}
+.tbtn.main{background:var(--or);border:none;color:#0A0A0F;width:44px;height:44px}
+.tbtn.main:hover{background:var(--or2)}
+.sdots{display:flex;gap:5px;margin-top:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--b2)}
+.dot.dd{background:var(--tl)}.dot.da{background:var(--or)}
+.phlab{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--di);margin-bottom:5px;display:flex;align-items:center;gap:5px}
+
+/* ── AI FEED ── */
+.afeed{display:flex;flex-direction:column;gap:5px;padding:9px 11px}
+.ac{background:var(--c2);border-radius:8px;padding:8px 10px}
+.acn{font-size:11px;color:var(--mu);font-weight:500;margin-bottom:1px}
+.acv{font-size:19px;font-weight:500;color:var(--tx);line-height:1;margin-bottom:2px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.02em}
+.act{font-size:11px;display:flex;align-items:center;gap:3px;margin-bottom:2px}
+.acf{font-size:10px;color:var(--di);line-height:1.4}
+.tup{color:var(--tl)}.tdn{color:var(--rd)}.tne{color:#EF9F27}
+.lbadge{margin:0 11px 5px;padding:7px 10px;background:rgba(255,107,26,.07);border-radius:8px;border:1px solid rgba(255,107,26,.2);display:flex;align-items:center;gap:6px;font-size:11px;color:var(--or)}
+.ldot{width:7px;height:7px;border-radius:50%;background:var(--or);flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.lpulse{animation:pulse 1.2s infinite}
+
+/* ── BUTTONS ── */
+.btn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:7px 14px;border-radius:7px;border:1px solid var(--b2);background:transparent;color:var(--mu);transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{color:var(--tx);border-color:var(--mu)}
+.btn.or{border:none;background:var(--or);color:#0A0A0F}
+.btn.or:hover{background:var(--or2)}
+.btn.tl{border-color:var(--tl);color:var(--tl);background:rgba(29,158,117,.1)}
+.btn.tl:hover{background:rgba(29,158,117,.2)}
+.btn.rd{border-color:var(--rd);color:var(--rd)}
+.btn.rd:hover{background:rgba(226,75,74,.1)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── STAT GRID ── */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:16px}
+.sc{background:var(--c1);border-radius:10px;padding:12px 10px;text-align:center;border:1px solid var(--b2)}
+.scn{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:28px;color:var(--or);line-height:1}
+.scl{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--di);margin-top:4px}
+
+/* ── BAR CHART ── */
+.bwrap{background:var(--c1);border-radius:10px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--b2)}
+.blbl{display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px}
+.blbl span:first-child{color:var(--mu)}
+.blbl span:last-child{color:var(--or);font-weight:600}
+.btrack{height:5px;background:rgba(240,237,232,.07);border-radius:3px;overflow:hidden}
+.bfill{height:100%;border-radius:3px;background:var(--or);transition:width .7s ease}
+.bfill.bl{background:var(--bl)}.bfill.tl{background:var(--tl)}.bfill.pu{background:var(--pu)}
+
+/* ── PLAYERS ── */
+.phdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px;margin-bottom:18px}
+.pcard{background:var(--c1);border-radius:12px;padding:14px;cursor:pointer;border:1px solid transparent;transition:all .15s;position:relative}
+.pcard:hover{border-color:rgba(255,107,26,.3);background:var(--c2)}
+.pav{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:17px;margin-bottom:9px}
+.pname{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.02em;text-transform:uppercase;margin-bottom:2px}
+.ppos{font-size:10px;color:var(--mu);letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px}
+.pmini{display:flex;gap:11px}
+.mn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:var(--or)}
+.ml{font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--di)}
+.pbadges{display:flex;gap:3px;flex-wrap:wrap;margin-top:8px}
+.bpill{font-size:9px;font-weight:600;padding:2px 6px;border-radius:20px;letter-spacing:.05em;text-transform:uppercase}
+.bp-gold{background:rgba(186,117,23,.25);color:#EF9F27}
+.bp-silver{background:rgba(136,135,128,.25);color:#B4B2A9}
+.bp-bronze{background:rgba(180,90,30,.25);color:#D85A30}
+.bp-blue{background:rgba(55,138,221,.2);color:#85B7EB}
+.bp-tl{background:rgba(29,158,117,.2);color:#5DCAA5}
+.bp-pu{background:rgba(127,119,221,.2);color:#AFA9EC}
+.delbtn{position:absolute;top:8px;right:8px;background:transparent;border:none;color:var(--di);font-size:14px;padding:2px 4px;line-height:1}
+.delbtn:hover{color:var(--rd)}
+
+/* ── PLAYER DETAIL ── */
+.pdcard{background:var(--c1);border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid var(--b1)}
+.pdhdr{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.pdav{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;flex-shrink:0}
+.pdname{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;text-transform:uppercase;letter-spacing:.02em}
+.pdpos{font-size:11px;color:var(--mu);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.dstats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px}
+.dst{background:var(--c2);border-radius:8px;padding:9px 7px;text-align:center}
+.dstn{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;color:var(--or)}
+.dstl{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--di);margin-top:2px}
+.btitle{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);margin-bottom:8px}
+.bgrid{display:flex;gap:8px;flex-wrap:wrap}
+.bcard{background:var(--c2);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;border:1px solid var(--b2);transition:transform .15s}
+.bcard:hover{transform:translateY(-2px)}
+.bcard.r-gold{border-color:rgba(239,159,39,.4);background:linear-gradient(135deg,rgba(239,159,39,.1),var(--c2))}
+.bcard.r-silver{border-color:rgba(180,178,169,.4);background:linear-gradient(135deg,rgba(180,178,169,.1),var(--c2))}
+.bcard.r-bronze{border-color:rgba(216,90,48,.4);background:linear-gradient(135deg,rgba(216,90,48,.1),var(--c2))}
+.bcard.r-blue{border-color:rgba(55,138,221,.4);background:linear-gradient(135deg,rgba(55,138,221,.1),var(--c2))}
+.bcard.r-tl{border-color:rgba(29,158,117,.4);background:linear-gradient(135deg,rgba(29,158,117,.1),var(--c2))}
+.bcard.r-pu{border-color:rgba(127,119,221,.4);background:linear-gradient(135deg,rgba(127,119,221,.1),var(--c2))}
+.bci-big{font-size:26px;flex-shrink:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,.4))}
+.bci{font-size:15px}
+.bcn{font-size:11px;font-weight:600;color:var(--tx)}
+.bcd{font-size:10px;color:var(--di)}
+
+/* ── LOG FORM ── */
+.logform{background:var(--c1);border-radius:12px;padding:16px;margin-bottom:14px;border:1px solid var(--b1)}
+.fmtitle{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:12px;color:var(--or)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);font-weight:600}
+.fg input,.fg select,.fg textarea{background:var(--c2);border:1px solid var(--b2);border-radius:7px;padding:7px 10px;color:var(--tx);font-size:12px;outline:none;transition:border-color .15s;width:100%}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--or)}
+.fg select option{background:var(--c2)}
+.fg textarea{resize:vertical;min-height:52px}
+.faction{display:flex;gap:7px;flex-wrap:wrap}
+
+/* ── LEADERBOARD ── */
+.lbrow{background:var(--c1);border-radius:10px;padding:11px 13px;margin-bottom:6px;display:flex;align-items:center;gap:11px;border:1px solid var(--b2)}
+.lbrank{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:17px;width:22px;text-align:center}
+.lbav{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:11px;flex-shrink:0}
+.lbinfo{flex:1}
+.lbname{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.02em}
+.lbsub{font-size:10px;color:var(--di)}
+.lbscore{text-align:right}
+.lbnum{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px;color:var(--or)}
+.lblbl{font-size:9px;color:var(--di);text-transform:uppercase;letter-spacing:.06em}
+
+/* ── AVAILABILITY ── */
+.avgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px;margin-bottom:14px}
+.avcard{background:var(--c1);border-radius:10px;padding:13px;border:1px solid transparent;transition:all .15s}
+.avcard.yes{border-color:var(--tl);background:rgba(29,158,117,.07)}
+.avcard.no{opacity:.55}
+.avname{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.02em;margin-bottom:2px}
+.avpos{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px}
+.avtog{display:flex;gap:5px;margin-top:9px}
+.avbtn{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border-radius:6px;border:1px solid var(--b2);background:transparent;color:var(--mu);flex:1;text-align:center;cursor:pointer}
+.avbtn.yes.on{background:rgba(29,158,117,.2);border-color:var(--tl);color:var(--tl)}
+.avbtn.no.on{background:rgba(226,75,74,.15);border-color:var(--rd);color:var(--rd)}
+
+/* ── EXERCISES MANAGE ── */
+.exrow{background:var(--c1);border-radius:10px;padding:12px 14px;margin-bottom:7px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;border:1px solid var(--b2)}
+.exnm{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.02em;margin-bottom:2px}
+.exmeta{font-size:11px;color:var(--mu)}
+.exact{display:flex;gap:5px;flex-shrink:0}
+.ibtn{background:var(--c2);border:1px solid var(--b2);border-radius:6px;padding:5px 8px;font-size:12px;color:var(--mu);cursor:pointer;transition:all .15s;line-height:1}
+.ibtn:hover{border-color:var(--or);color:var(--or)}
+.ibtn.on{background:var(--ord);border-color:var(--or);color:var(--or)}
+
+/* ── HISTOGRAM ── */
+.hist{background:var(--c1);border-radius:10px;padding:13px;display:flex;align-items:flex-end;gap:5px;height:90px;border:1px solid var(--b2)}
+.hcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%}
+.hbw{flex:1;display:flex;align-items:flex-end;width:100%}
+.hbar{width:100%;border-radius:3px 3px 0 0;min-height:3px}
+.hday{font-size:8px;color:var(--di);text-transform:uppercase;letter-spacing:.05em}
+
+/* ── RESULT ── */
+.resgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:11px}
+.rescard{background:var(--c2);border-radius:8px;padding:8px 10px}
+.reslbl{font-size:10px;color:var(--di);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.resval{font-size:16px;font-weight:500;color:var(--tx);font-family:'Barlow Condensed',sans-serif;letter-spacing:.02em}
+.fbanner{background:rgba(29,158,117,.1);border-radius:10px;padding:12px;margin-bottom:11px;border:1px solid rgba(29,158,117,.3);display:flex;align-items:center;gap:9px}
+.ficon{width:30px;height:30px;border-radius:50%;background:var(--tl);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.ft{font-size:13px;font-weight:500;color:var(--tl);margin-bottom:1px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.02em;text-transform:uppercase}
+.fs{font-size:11px;color:rgba(29,158,117,.7)}
+
+/* ── MODALS ── */
+.modal-bg{background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
+.modal{background:var(--c1);border-radius:14px;padding:22px;width:100%;max-width:440px;border:1px solid var(--b1);max-height:90vh;overflow-y:auto}
+.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.mtitle{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:.04em}
+.mcls{background:none;border:none;color:var(--mu);font-size:17px;cursor:pointer;line-height:1;padding:2px 4px}
+.mcls:hover{color:var(--tx)}
+.cpicker{display:flex;gap:6px;flex-wrap:wrap}
+.copt{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .15s}
+.copt.sel{border-color:var(--tx)}
+.step-ins{display:flex;flex-direction:column;gap:5px;margin-top:3px}
+.steprow{display:flex;gap:5px;align-items:center}
+.steprow input{flex:1}
+.rmstep{background:transparent;border:1px solid var(--b2);border-radius:6px;color:var(--di);padding:5px 7px;font-size:11px;flex-shrink:0;cursor:pointer}
+.rmstep:hover{border-color:var(--rd);color:var(--rd)}
+.addstep{font-size:11px;padding:6px;border-radius:6px;border:1px dashed var(--b2);background:transparent;color:var(--mu);margin-top:4px;width:100%;text-align:center;cursor:pointer}
+.addstep:hover{border-color:var(--or);color:var(--or)}
+
+/* ── INFO BOX ── */
+.infobox{background:var(--c2);border-radius:8px;padding:11px 13px;font-size:12px;color:var(--mu);line-height:1.6;margin-bottom:13px;border-left:3px solid var(--bl)}
+
+/* ── HERO ── */
+.hero{display:flex;align-items:center;gap:20px;margin-bottom:22px;padding:20px;background:var(--c1);border-radius:14px;border:1px solid var(--b2)}
+.hero-t{flex:1}
+.eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--or);margin-bottom:5px}
+.headline{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:40px;line-height:.95;text-transform:uppercase;margin-bottom:10px}
+.headline em{font-style:normal;color:var(--or);display:block}
+.hsub{font-size:12px;color:var(--mu);line-height:1.6;max-width:300px;margin-bottom:16px}
+.srow2{display:flex;gap:16px}
+.srnum{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;color:var(--or);line-height:1;text-align:center}
+.srlbl{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--di);margin-top:2px;text-align:center}
+
+/* XP / LEVEL SYSTEM */
+.lvlrow{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.lvlbadge{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--or),#FFB347);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:17px;color:#1A0E00;flex-shrink:0;box-shadow:0 0 0 3px rgba(255,107,26,.18),0 2px 8px rgba(255,107,26,.35)}
+.lvlinfo{flex:1;min-width:0}
+.lvlname{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--tx);margin-bottom:4px}
+.xptrack{height:7px;background:rgba(255,107,26,.12);border-radius:4px;overflow:hidden;margin-bottom:3px}
+.xpfill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--or),#FFB347);transition:width .8s cubic-bezier(.2,.9,.3,1.3);position:relative}
+@keyframes xpshine{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
+.xpfill::after{content:'';position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);animation:xpshine 2.2s ease-in-out infinite}
+.xplbl{font-size:10px;color:var(--di);letter-spacing:.03em}
+
+/* BADGE UNLOCK CELEBRATION */
+#badgeUnlockOverlay{display:none;background:rgba(8,6,2,.78);position:fixed;inset:0;z-index:900;align-items:center;justify-content:center;padding:24px}
+#badgeUnlockOverlay.show{display:flex}
+.bu-card{background:linear-gradient(165deg,#1C1C24,#0A0A0F);border:1px solid rgba(255,107,26,.4);border-radius:20px;padding:34px 28px;text-align:center;max-width:300px;width:100%;box-shadow:0 0 60px rgba(255,107,26,.25);transform:scale(.7);opacity:0;animation:buPop .55s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes buPop{0%{transform:scale(.6) translateY(10px);opacity:0}60%{transform:scale(1.06)}100%{transform:scale(1) translateY(0);opacity:1}}
+.bu-eyebrow{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--or);margin-bottom:14px}
+.bu-icon-wrap{width:104px;height:104px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:50px;position:relative;background:radial-gradient(circle,rgba(255,107,26,.25),transparent 70%)}
+.bu-icon-wrap::before{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,107,26,.5);animation:buRing 1.6s ease-out infinite}
+@keyframes buRing{0%{transform:scale(.8);opacity:1}100%{transform:scale(1.5);opacity:0}}
+.bu-name{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;text-transform:uppercase;letter-spacing:.03em;color:var(--tx);margin-bottom:6px}
+.bu-desc{font-size:12px;color:var(--mu);margin-bottom:20px;line-height:1.5}
+.bu-confetti{position:absolute;inset:0;overflow:hidden;border-radius:20px;pointer-events:none}
+.bu-confetti span{position:absolute;top:-10px;width:7px;height:11px;opacity:0;animation:buFall 1.8s ease-in forwards}
+@keyframes buFall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(220px) rotate(540deg)}}
+
+/* ── WEEK ── */
+.wgrid{display:flex;gap:5px;margin-bottom:16px}
+.dpill{flex:1;text-align:center;padding:8px 3px;border-radius:7px;background:var(--c1);border:1px solid transparent}
+.dpill.done{background:var(--ord);border-color:var(--or)}
+.dpill.today{border-color:rgba(255,107,26,.5)}
+.dlbl{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--di);margin-bottom:4px}
+.ddot{width:20px;height:20px;border-radius:50%;margin:0 auto;background:rgba(240,237,232,.08);display:flex;align-items:center;justify-content:center;font-size:10px}
+.dpill.done .ddot{background:var(--or);color:#0A0A0F}
+
+/* ── CAT TABS ── */
+.ctabs{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap}
+.ctab{font-size:10px;font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:5px 11px;border-radius:6px;border:1px solid var(--b2);background:transparent;color:var(--mu);cursor:pointer;transition:all .15s}
+.ctab.on{background:var(--ord);border-color:var(--or);color:var(--or)}
+.ctab:hover:not(.on){border-color:var(--mu);color:var(--tx)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:18px;right:18px;background:var(--c1);border:1px solid var(--b1);border-radius:10px;padding:10px 15px;font-size:12px;display:flex;align-items:center;gap:7px;z-index:600;transform:translateY(80px);opacity:0;transition:all .3s;max-width:280px;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.tdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* ── SETTINGS ── */
+.setcard{background:var(--c1);border-radius:12px;padding:16px;margin-bottom:11px;border:1px solid var(--b2)}
+.settitle{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:11px;color:var(--mu)}
+.setrow{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(240,237,232,.05)}
+.setrow:last-child{border-bottom:none}
+
+@media(max-width:700px){
+  body{font-size:15px}
+  .nav{padding:10px 12px;gap:7px}
+  .nav-logo{font-size:13px}
+  .nav-r{gap:5px;width:100%;justify-content:flex-start}
+  .ntabs{order:3;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;justify-content:flex-start}
+  .ntabs .tab{font-size:10px;padding:6px 9px;white-space:nowrap;flex-shrink:0}
+  .swbtn{margin-left:auto}
+  .vwrap{padding:12px}
+  .headline{font-size:26px}
+  .hero{flex-direction:column;align-items:flex-start;gap:14px;padding:16px}
+  .hero #ballCanvas{align-self:center}
+  .srow2{gap:10px}
+  .tcols{grid-template-columns:1fr;height:auto;border-radius:10px}
+  .tcol{max-height:280px}
+  .tcol.tc-c{max-height:none}
+  .pgrid{grid-template-columns:1fr 1fr}
+  .avgrid{grid-template-columns:1fr}
+  .dstats{grid-template-columns:repeat(2,1fr)}
+  .frow{grid-template-columns:1fr}
+  .resgrid{grid-template-columns:1fr 1fr}
+  .sgrid{grid-template-columns:repeat(2,1fr)}
+  .rcards{flex-direction:column}
+  .rcard{min-width:0}
+  .modal{padding:16px;max-height:85vh}
+  .modal-bg{padding:10px}
+  .btn,.abtn,.tbtn{min-height:38px}
+  .pdhdr{flex-wrap:wrap}
+  .lbrow{flex-wrap:wrap}
+  .wgrid{flex-wrap:wrap}
+  .dpill{min-width:13%}
+  pre{font-size:9px!important}
+}
+@media(max-width:420px){
+  .headline{font-size:22px}
+  .pgrid{grid-template-columns:1fr}
+  .resgrid{grid-template-columns:1fr}
+  .sgrid{grid-template-columns:1fr 1fr}
+  .rl{font-size:30px}
+  .rcard{padding:20px 14px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ ROLE SCREEN ══ -->
+<div id="roleScreen" style="display:flex">
+  <div class="rl">COURT<span>IQ</span></div>
+  <p class="rsub">Vali oma roll jätkamiseks</p>
+  <div class="rcards">
+    <div class="rcard" id="rCoach" onclick="selectRole('coach')">
+      <div class="ri">🏋️</div>
+      <div class="rt">Treener</div>
+      <div class="rs">Lisa harjutusi, halda mängijaid, vaata leaderboardi ja saavutusi</div>
+    </div>
+    <div class="rcard" id="rPlayer" onclick="openPlayerPicker()">
+      <div class="ri">🏀</div>
+      <div class="rt">Mängija</div>
+      <div class="rs">Treeni harjutustega, märgi saadavust ja jälgi oma arengut</div>
+    </div>
+  </div>
+</div>
+
+<div id="playerPickerScreen" style="display:none">
+  <div class="rl" style="font-size:24px">Kes sa oled?</div>
+  <p class="rsub">Vali oma profiil või loo uus</p>
+  <div id="ppExisting" style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:340px;margin-top:6px"></div>
+  <div style="width:100%;max-width:340px;margin-top:14px">
+    <button class="btn or" id="ppCreateBtn" style="width:100%;justify-content:center;padding:12px">+ Loo uus mängija</button>
+  </div>
+  <button class="swbtn" id="ppBackBtn" style="margin-top:18px">← Tagasi</button>
+</div>
+
+<div id="playerCreateScreen" style="display:none">
+  <div class="rl" style="font-size:24px">Loo oma profiil</div>
+  <p class="rsub">Need andmed on nähtavad treenerile ja teistele mängijatele</p>
+  <div style="display:flex;flex-direction:column;gap:9px;width:100%;max-width:340px;margin-top:6px">
+    <div class="fg"><label>Nimi</label><input type="text" id="pcName" placeholder="Eesnimi Perekonnanimi"></div>
+    <div class="frow">
+      <div class="fg"><label>Positsioon</label><select id="pcPos"><option>Mängujuht</option><option>Tagamängija</option><option>Väikeründaja</option><option>Suurründaja</option><option>Tsentermängija</option></select></div>
+      <div class="fg"><label>Vanus</label><input type="number" id="pcAge" min="6" max="50" placeholder="16"></div>
+    </div>
+    <div class="fg"><label>Avatari värv</label><div class="cpicker" id="pcColorPicker"></div></div>
+    <button class="btn or" id="pcSaveBtn" style="justify-content:center;padding:12px;margin-top:6px">Alusta treenimist</button>
+    <button class="swbtn" id="pcBackBtn" style="align-self:center;margin-top:4px">← Tagasi</button>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div id="mainApp" style="display:none">
+<nav class="nav">
+  <div class="logo">COURT<span>IQ</span></div>
+  <div class="nav-r">
+    <div class="rbadge" id="roleBadge">Treener</div>
+    <span class="spill sp0" id="pill">Ootel</span>
+    <div class="ntabs" id="navTabs"></div>
+    <button class="swbtn" id="swBtn">Vaheta rolli</button>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div id="view-home" class="view">
+  <div class="hero">
+    <div class="hero-t">
+      <div class="eyebrow">Tänane treening</div>
+      <h1 class="headline">Treeni<br><em>Teisiti.</em></h1>
+      <p class="hsub">Profi harjutused palli kontrolli, jalgade töö ja lõpetamise jaoks.</p>
+      <div class="lvlrow" id="lvlRow">
+        <div class="lvlbadge" id="lvlBadge">1</div>
+        <div class="lvlinfo">
+          <div class="lvlname" id="lvlName">Algaja</div>
+          <div class="xptrack"><div class="xpfill" id="xpFill" style="width:0%"></div></div>
+          <div class="xplbl" id="xpLbl">0 / 100 XP</div>
+        </div>
+      </div>
+      <div class="srow2">
+        <div><div class="srnum" id="hStr">0</div><div class="srlbl">Päeva järjest</div></div>
+        <div><div class="srnum" id="hTot">0</div><div class="srlbl">Harjutust</div></div>
+        <div><div class="srnum" id="hHrs">0h</div><div class="srlbl">Sel nädalal</div></div>
+      </div>
+    </div>
+    <canvas id="ballCanvas" width="120" height="140" style="flex-shrink:0"></canvas>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div class="stl" style="margin:0">See nädal</div>
+  </div>
+  <div class="wgrid" id="weekGrid"></div>
+
+  <div class="tcols">
+    <div class="tcol tc-l">
+      <div class="tchdr"><span class="tcht">Harjutused</span><span class="tchs" id="hDProg">—</span></div>
+      <div id="hDrillList"></div>
+    </div>
+    <div class="tcol tc-c">
+      <div class="cp" id="hCenterPane"></div>
+    </div>
+    <div class="tcol tc-r">
+      <div class="tchdr"><span class="tcht">AI analüüs</span><span class="tchs" id="hAIHint">Reaalajas</span></div>
+      <div class="lbadge" id="hLiveBadge" style="display:none"><div class="ldot lpulse"></div><span id="hLiveTxt">AI jälgib...</span></div>
+      <div class="afeed" id="hAIFeed"></div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+    <button class="btn or" id="hStartBtn">▶ Alusta treeningut</button>
+    <button class="btn" id="hAddBtn">+ Lisa harjutus</button>
+    <button class="btn" id="hResetBtn" style="display:none">↺ Lähtesta</button>
+  </div>
+</div>
+
+<!-- DRILLS -->
+<div id="view-drills" class="view">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.04em">Harjutuste kogu</div>
+    <button class="btn or" id="dAddBtn">+ Lisa harjutus</button>
+  </div>
+  <div class="ctabs" id="drillCatTabs"></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px" id="allDrills"></div>
+</div>
+
+<!-- PLAYERS (coach) -->
+<div id="view-players" class="view">
+  <div class="phdr" id="phdr">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.04em">Mängijad</div>
+    <button class="btn or" id="pAddBtn">+ Lisa mängija</button>
+  </div>
+  <div class="pgrid" id="playerGrid"></div>
+  <div id="playerDetail" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;text-transform:uppercase;letter-spacing:.04em" id="detailTitle">—</div>
+      <button class="btn" id="detailBack" style="font-size:11px;padding:5px 10px">← Tagasi</button>
+    </div>
+    <div class="pdcard">
+      <div class="pdhdr"><div class="pdav" id="detailAv"></div><div><div class="pdname" id="detailName"></div><div class="pdpos" id="detailPos"></div></div></div>
+      <div class="dstats" id="detailStats"></div>
+      <div class="btitle">Saavutused</div>
+      <div class="bgrid" id="detailBadges"></div>
+    </div>
+    <div class="logform">
+      <div class="fmtitle">Lisa treeningkanne</div>
+      <div class="frow">
+        <div class="fg"><label>Kuupäev</label><input type="date" id="logDate"></div>
+        <div class="fg"><label>Kestus (min)</label><input type="number" id="logDur" min="1" max="300" placeholder="45"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Harjutus</label><select id="logDrill"></select></div>
+        <div class="fg"><label>Intensiivsus</label><select id="logInt"><option value="madal">Madal</option><option value="keskmine" selected>Keskmine</option><option value="kõrge">Kõrge</option></select></div>
+      </div>
+      <div class="frow"><div class="fg full"><label>Märkmed</label><textarea id="logNotes" placeholder="Kuidas läks?"></textarea></div></div>
+      <div class="faction">
+        <button class="btn or" id="logSave">Salvesta kanne</button>
+        <button class="btn tl" id="logSync">↑ Google Sheets</button>
+      </div>
+    </div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Ajalugu</div>
+    <div id="sessionHist"></div>
+  </div>
+</div>
+
+<!-- EXERCISES (coach) -->
+<div id="view-exercises" class="view">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.04em">Harjutuste haldus</div>
+    <button class="btn or" id="exAddBtn">+ Uus harjutus</button>
+  </div>
+  <div class="infobox">💡 Siin lood harjutusi mis on kohe nähtavad kõigile mängijatele. Aktiveeri/deaktiveeri nupp peidab/näitab harjutuse.</div>
+  <div id="exManageList"></div>
+</div>
+
+<!-- LEADERBOARD -->
+<div id="view-leaderboard" class="view">
+  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:16px">🏆 Edetabel &amp; saavutused</div>
+  <div class="sgrid" id="lbStats"></div>
+  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px">Mängijate edetabel</div>
+  <div id="lbRows"></div>
+  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.04em;margin:18px 0 10px">Oskuste areng</div>
+  <div class="bwrap"><div class="blbl"><span>Palli kontroll</span><span id="skBall">0%</span></div><div class="btrack"><div class="bfill" id="fBall" style="width:0%"></div></div></div>
+  <div class="bwrap"><div class="blbl"><span>Jalgade töö</span><span id="skFoot">0%</span></div><div class="btrack"><div class="bfill bl" id="fFoot" style="width:0%"></div></div></div>
+  <div class="bwrap"><div class="blbl"><span>Viske tehnika</span><span id="skShoot">0%</span></div><div class="btrack"><div class="bfill tl" id="fShoot" style="width:0%"></div></div></div>
+  <div class="bwrap"><div class="blbl"><span>Kaitse</span><span id="skDef">0%</span></div><div class="btrack"><div class="bfill pu" id="fDef" style="width:0%"></div></div></div>
+  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.04em;margin:18px 0 10px">Viimased 7 päeva</div>
+  <div class="hist" id="histogram"></div>
+
+  <!-- DEVELOPMENT PLAN -->
+  <div id="devPlanWrap" style="margin-top:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;text-transform:uppercase;letter-spacing:.04em" id="devPlanTitle">📋 Treeningkava</div>
+      <select id="planPlayerSel" style="display:none;background:var(--c1);border:1px solid var(--b2);border-radius:7px;padding:6px 9px;color:var(--tx);font-size:12px;outline:none"></select>
+    </div>
+    <div class="infobox" id="planExplain" style="border-left-color:var(--or)">Kava koostatakse automaatselt nõrgima oskuse põhjal — iga kord kui logitakse uus treening, kava uueneb.</div>
+    <div id="devPlanContent"></div>
+  </div>
+
+  <!-- HISTORICAL TREND CHART -->
+  <div id="trendWrap" style="margin-top:24px">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px">📈 Areng ajas</div>
+    <div class="bwrap" style="padding:14px">
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap" id="trendLegend"></div>
+      <svg id="trendSvg" viewBox="0 0 400 140" style="width:100%;height:140px;display:block"></svg>
+      <div style="display:flex;justify-content:space-between;margin-top:4px" id="trendXLabels"></div>
+    </div>
+  </div>
+
+  <!-- GOALS / STREAKS -->
+  <div id="goalsWrap" style="margin-top:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;text-transform:uppercase;letter-spacing:.04em">🎯 Eesmärgid</div>
+      <button class="btn" id="goalEditBtn" style="font-size:11px;padding:5px 10px">Muuda eesmärki</button>
+    </div>
+    <div id="goalsContent"></div>
+  </div>
+</div>
+
+<!-- AVAILABILITY -->
+<div id="view-availability" class="view">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.04em">Saadavus</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <label style="font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.08em">Kuupäev:</label>
+      <input type="date" id="availDate" style="background:var(--c1);border:1px solid var(--b2);border-radius:7px;padding:5px 9px;color:var(--tx);font-size:11px;outline:none">
+    </div>
+  </div>
+  <div class="infobox" id="availExplain" style="border-left-color:var(--bl)"></div>
+  <div id="availContent"></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="view-settings" class="view">
+  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:14px">Seaded</div>
+  <div class="setcard">
+    <div class="settitle">Google Drive / Sheets sünkroonimine</div>
+    <div style="font-size:12px;color:var(--mu);line-height:1.7;margin-bottom:12px">
+      Kõik andmed salvestatakse automaatselt brauseri <code style="color:var(--or)">localStorage</code>'sse.<br>
+      Google Sheets sünkroonib <b style="color:var(--tx)">kolme eraldi lehte</b>: <code style="color:var(--or)">Kanded</code>, <code style="color:var(--or)">Mängijad</code>, <code style="color:var(--or)">Harjutused</code>.
+    </div>
+    <div class="fg" style="margin-bottom:10px">
+      <label>Apps Script URL</label>
+      <input type="text" id="gsUrl" placeholder="https://script.google.com/macros/s/...">
+    </div>
+    <button class="btn or" id="gsUrlSave">Salvesta URL</button>
+    <button class="btn" id="gsTestBtn" style="margin-left:6px">Testi ühendust</button>
+    <button class="btn tl" id="gsSyncAllBtn" style="margin-left:6px">↑ Sünkrooni kõik</button>
+    <div id="gsStatus" style="font-size:11px;color:var(--di);margin-top:8px"></div>
+    <details style="margin-top:14px">
+      <summary style="font-size:12px;color:var(--mu);cursor:pointer;margin-bottom:9px">Kuidas seadistada Apps Script? ▾</summary>
+      <div style="font-size:11px;color:var(--di);line-height:1.7;background:var(--c2);border-radius:8px;padding:12px">
+        <b style="color:var(--tx)">1.</b> Ava <a href="https://sheets.google.com" target="_blank" style="color:var(--or)">sheets.google.com</a> → loo uus tabel (lehtede nimed pole olulised — skript loob need ise ära)<br>
+        <b style="color:var(--tx)">2.</b> Ava <b style="color:var(--tx)">Laiendused → Apps Script</b><br>
+        <b style="color:var(--tx)">3.</b> Kustuta vana kood, kleebi see kood:<br>
+        <b style="color:var(--tx)">4.</b> Vali <b style="color:var(--tx)">Juuruta → Uus juurutus → Veebirakendus</b>, sea juurdepääs <b style="color:var(--tx)">"Kõigile"</b><br>
+        <b style="color:var(--tx)">5.</b> Kopeeri URL siia ja vajuta "Testi ühendust"<br>
+        <b style="color:var(--tx)">Oluline:</b> kui muudad koodi hiljem, vali alati <b style="color:var(--tx)">Uus juurutus</b> (mitte "Manage deployments"), muidu vana URL ei kasuta uut koodi.<br><br>
+        <pre style="background:var(--bg);padding:9px;border-radius:6px;font-size:10px;color:var(--tx);overflow-x:auto">function getSheet(name, headers) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(name);
+  if (!sh) {
+    sh = ss.insertSheet(name);
+    sh.appendRow(headers);
+  }
+  return sh;
+}
+
+function doPost(e) {
+  try {
+    const d = JSON.parse(e.postData.contents);
+    const type = d.type || 'session';
+
+    if (type === 'session') {
+      const sh = getSheet('Kanded', ['Kuupäev','Mängija','Harjutus','Kestus','Intensiivsus','Märkmed','Salvestatud']);
+      sh.appendRow([d.kuupäev, d.mängija, d.harjutus, d.kestus, d.intensiivsus, d.märkmed||'', new Date().toISOString()]);
+    } else if (type === 'player') {
+      const sh = getSheet('Mängijad', ['ID','Nimi','Positsioon','Vanus','Uuendatud']);
+      const rows = sh.getDataRange().getValues();
+      let found = false;
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i][0] === d.id) {
+          sh.getRange(i+1,1,1,5).setValues([[d.id,d.nimi,d.positsioon,d.vanus,new Date().toISOString()]]);
+          found = true; break;
+        }
+      }
+      if (!found) sh.appendRow([d.id, d.nimi, d.positsioon, d.vanus, new Date().toISOString()]);
+    } else if (type === 'drill') {
+      const sh = getSheet('Harjutused', ['ID','Nimi','Kategooria','Tase','Kestus','Aktiivne','Uuendatud']);
+      const rows = sh.getDataRange().getValues();
+      let found = false;
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i][0] === d.id) {
+          sh.getRange(i+1,1,1,7).setValues([[d.id,d.nimi,d.kategooria,d.tase,d.kestus,d.aktiivne,new Date().toISOString()]]);
+          found = true; break;
+        }
+      }
+      if (!found) sh.appendRow([d.id, d.nimi, d.kategooria, d.tase, d.kestus, d.aktiivne, new Date().toISOString()]);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ok:true}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ok:false, error:String(err)}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({ok:true, msg:'Court IQ Apps Script is live'}))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+      </div>
+    </details>
+  </div>
+  <div class="setcard">
+    <div class="settitle">Andmed</div>
+    <div class="setrow">
+      <div><div style="font-size:13px">Kustuta kõik kanded</div><div style="font-size:11px;color:var(--di)">Mängijad ja harjutused jäävad alles</div></div>
+      <button class="btn rd" id="clearSessions">Kustuta</button>
+    </div>
+    <div class="setrow">
+      <div><div style="font-size:13px">Lähtesta kogu rakendus</div><div style="font-size:11px;color:var(--di)">Kustutab kõik andmed</div></div>
+      <button class="btn rd" id="clearAll">Kustuta kõik</button>
+    </div>
+    <div class="setrow"><div style="font-size:13px">Versioon</div><span style="font-size:12px;color:var(--di)">Court IQ v3.0</span></div>
+  </div>
+</div>
+
+</div><!-- /mainApp -->
+
+<!-- MODALS -->
+<div class="modal-bg" id="addPlayerModal" style="display:none">
+  <div class="modal">
+    <div class="mhdr"><span class="mtitle">Lisa mängija</span><button class="mcls" id="apmClose">✕</button></div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div class="fg"><label>Nimi</label><input type="text" id="apName" placeholder="Eesnimi Perekonnanimi"></div>
+      <div class="frow">
+        <div class="fg"><label>Positsioon</label><select id="apPos"><option>Mängujuht</option><option>Tagamängija</option><option>Väikeründaja</option><option>Suurründaja</option><option>Tsentermängija</option></select></div>
+        <div class="fg"><label>Vanus</label><input type="number" id="apAge" min="6" max="50" placeholder="16"></div>
+      </div>
+      <div class="fg"><label>Avatari värv</label><div class="cpicker" id="colorPicker"></div></div>
+      <div style="display:flex;gap:7px;margin-top:5px">
+        <button class="btn or" id="apSave">Lisa mängija</button>
+        <button class="btn" id="apCancel">Tühista</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="exModal" style="display:none">
+  <div class="modal">
+    <div class="mhdr"><span class="mtitle" id="exModalTitle">Uus harjutus</span><button class="mcls" id="exmClose">✕</button></div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div class="frow">
+        <div class="fg"><label>Nimi</label><input type="text" id="exName" placeholder="Harjutuse nimi"></div>
+        <div class="fg"><label>Ikoon</label><input type="text" id="exIcon" placeholder="🏀" maxlength="2" style="font-size:18px;text-align:center"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Kategooria</label><select id="exCat"><option value="tor">Palli kontroll</option><option value="tbl">Rütm</option><option value="ttl">Jalgade töö</option><option value="tpu">Vise</option><option value="tgy">Muu</option></select></div>
+        <div class="fg"><label>Tase</label><select id="exLevel"><option value="algaja">Algaja</option><option value="keskmine">Keskmine</option><option value="edasijounud">Edasijõudnud</option></select></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Kestus</label><input type="text" id="exDur" placeholder="10 min"></div>
+        <div class="fg"><label>Värv</label><select id="exColor"><option value="orange">Oranž</option><option value="blue">Sinine</option><option value="teal">Roheline</option><option value="purple">Lilla</option><option value="green">Heleroheline</option><option value="red">Punane</option></select></div>
+      </div>
+      <div class="fg"><label>Kirjeldus</label><textarea id="exDesc" placeholder="Lühike kirjeldus..."></textarea></div>
+      <div class="fg">
+        <label>Sammud</label>
+        <div class="step-ins" id="stepInputs"></div>
+        <button class="addstep" id="addStepBtn">+ Lisa samm</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="exActive" checked style="width:auto;accent-color:var(--or)">
+        <label style="font-size:12px;text-transform:none;letter-spacing:0;color:var(--tx);font-weight:400">Aktiivne — nähtav kõigile mängijatele</label>
+      </div>
+      <div style="display:flex;gap:7px;margin-top:4px">
+        <button class="btn or" id="exSave">Salvesta harjutus</button>
+        <button class="btn" id="exCancel">Tühista</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="goalModal" style="display:none">
+  <div class="modal">
+    <div class="mhdr"><span class="mtitle">Sea treeningeesmärk</span><button class="mcls" id="goalmClose">✕</button></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="fg"><label>Treeninguid nädalas</label><input type="number" id="goalWeekly" min="1" max="14" placeholder="4"></div>
+      <div class="fg"><label>Sihtmärk-tundi kuus</label><input type="number" id="goalHours" min="1" max="200" placeholder="20"></div>
+      <div class="fg"><label>Fookus-oskus (valikuline)</label>
+        <select id="goalFocus">
+          <option value="">Automaatne (nõrgim oskus)</option>
+          <option value="tor">Palli kontroll</option>
+          <option value="ttl">Jalgade töö</option>
+          <option value="tpu">Vise</option>
+          <option value="tgy">Kaitse</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:7px;margin-top:4px">
+        <button class="btn or" id="goalSave">Salvesta eesmärk</button>
+        <button class="btn" id="goalCancel">Tühista</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><div class="tdot" id="toastDot"></div><span id="toastMsg"></span></div>
+
+<div id="badgeUnlockOverlay">
+  <div class="bu-card" id="buCard">
+    <div class="bu-confetti" id="buConfetti"></div>
+    <div class="bu-eyebrow">Uus saavutus!</div>
+    <div class="bu-icon-wrap"><span id="buIcon">🏆</span></div>
+    <div class="bu-name" id="buName">—</div>
+    <div class="bu-desc" id="buDesc">—</div>
+    <button class="btn or" id="buCloseBtn" style="width:100%;justify-content:center;padding:11px">Lahe!</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  GOOGLE SHEETS CONFIG — lisa oma URL siia
+// ═══════════════════════════════════════════
+var SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwrA8zWKW-aFu3F24J47JnKm5pB5XenBr-aIQHR6Gjboxx14ayZfken9iEiZpDuJnOK3A/exec';
+
+// ═══════════════════════════════════════════
+//  BUILTIN DRILLS
+// ═══════════════════════════════════════════
+var BUILTIN = [
+  {id:'b0',name:'Stationary Pound Dribble',icon:'🏀',tag:'Palli kontroll',tc:'tor',lv:'algaja',dur:'5 min',sets:3,setDur:30,rest:15,builtin:true,active:true,
+   desc:'Tugevad põrgatused ühel kohal, mõlemad käed.',
+   steps:['Madal asend — põlved kõverdatud, selg sirge','Põrgata parema käega 30 sek, alla põlve kõrguse','Vaheta kätt, 30 sek vasaku käega','Puhka 15 sek, korda 3 korda'],
+   errors:['Liiga kõrge põrgatus','Sirged põlved'],
+   stats:[{n:'Põrgatuste arv',v:'—',tc:'tne',ti:'ti-minus',f:'AI loeb põrgatusi'},{n:'Kõrgus',v:'—',tc:'tne',ti:'ti-minus',f:'Alla põlve kõrguse'},{n:'Rütm',v:'—',tc:'tne',ti:'ti-minus',f:'s/põrgatus'},{n:'Asend',v:'—',tc:'tne',ti:'ti-minus',f:'Stabiilsus'}],
+   live:[[{n:'Põrgatuste arv',v:'18',tr:'Hea tempo',tc:'tup',ti:'ti-trending-up',f:'AI loeb videost'},{n:'Kõrgus',v:'21 cm',tr:'Alla põlve',tc:'tup',ti:'ti-trending-up',f:'Alla 25 cm'},{n:'Rütm',v:'0.51 s',tr:'Ühtlane',tc:'tup',ti:'ti-trending-up',f:'Kiiremaks'},{n:'Asend',v:'89%',tr:'Hea',tc:'tup',ti:'ti-trending-up',f:'Puusad joonduses'}],[{n:'Põrgatuste arv',v:'64',tr:'Rekord!',tc:'tup',ti:'ti-trending-up',f:'Salvestatud'},{n:'Kõrgus',v:'24 cm',tr:'Täpselt õige',tc:'tup',ti:'ti-trending-up',f:'Perfektne'},{n:'Rütm',v:'0.47 s',tr:'Rekord!',tc:'tup',ti:'ti-trending-up',f:'Parim tulemus'},{n:'Asend',v:'93%',tr:'Suurepärane',tc:'tup',ti:'ti-trending-up',f:'Täiuslik'}]]},
+  {id:'b1',name:'Low–High Rhythm Dribble',icon:'🔵',tag:'Rütm',tc:'tbl',lv:'keskmine',dur:'2 min',sets:2,setDur:60,rest:20,builtin:true,active:true,
+   desc:'Vahelduvad madalad ja kõrged põrgatused.',
+   steps:['3 madalat põrgatust (põlve kõrgusel)','3 kõrget põrgatust (vöö kõrgusel)','Korda rütmi katkematult 2 min','Teine seeria vasaku käega'],
+   errors:['Ebaühtlane rütm','Pall liiga kõvasti'],
+   stats:[{n:'Kõrguste vahe',v:'—',tc:'tne',ti:'ti-minus',f:'cm'},{n:'Rütm',v:'—',tc:'tne',ti:'ti-minus',f:'s/vahetus'},{n:'Käte sümmeetria',v:'—',tc:'tne',ti:'ti-minus',f:'parem vs vasak'},{n:'Asend',v:'—',tc:'tne',ti:'ti-minus',f:'Stabiilsus'}],
+   live:[[{n:'Kõrguste vahe',v:'34 cm',tr:'Hea',tc:'tup',ti:'ti-trending-up',f:'30–45 cm'},{n:'Rütm',v:'0.54 s',tr:'Ühtlane',tc:'tup',ti:'ti-trending-up',f:'Hoia'},{n:'Käte sümmeetria',v:'82%',tr:'Vasak nõrgem',tc:'tne',ti:'ti-alert-circle',f:'Treeni vasakut'},{n:'Asend',v:'87%',tr:'Hea',tc:'tup',ti:'ti-trending-up',f:'Õlad horisontaalsed'}]]},
+  {id:'b2',name:'Defensive Slides',icon:'🛡',tag:'Jalgade töö',tc:'ttl',lv:'keskmine',dur:'6 min',sets:3,setDur:30,rest:15,builtin:true,active:true,
+   desc:'Kaitseliugud minikoridoris. Arendab külgmist kiirust.',
+   steps:['Kaitseasend — põlved kõverdatud, käed ees','2–3 sammu paremale, jalgu ristamata','Kohe tagasi vasakule','Pea samal kõrgusel'],
+   errors:['Jalgade ristumine','Keha liiga püsti'],
+   stats:[{n:'Liugude kiirus',v:'—',tc:'tne',ti:'ti-minus',f:'m/s'},{n:'Põlvede nurk',v:'—',tc:'tne',ti:'ti-minus',f:'100–120°'},{n:'Pea kõrgus',v:'—',tc:'tne',ti:'ti-minus',f:'Stabiilsus'},{n:'Reaktsioon',v:'—',tc:'tne',ti:'ti-minus',f:'s'}],
+   live:[[{n:'Liugude kiirus',v:'1.1 m/s',tr:'Hea algus',tc:'tup',ti:'ti-trending-up',f:'Eesmärk: 1.2+'},{n:'Põlvede nurk',v:'108°',tr:'Ideaalne',tc:'tup',ti:'ti-trending-up',f:'100–120°'},{n:'Pea kõrgus',v:'94%',tr:'Stabiilne',tc:'tup',ti:'ti-trending-up',f:'Hoia nii'},{n:'Reaktsioon',v:'0.34 s',tr:'Pisut aeglane',tc:'tne',ti:'ti-alert-circle',f:'Alla 0.30 s'}],[{n:'Liugude kiirus',v:'1.3 m/s',tr:'Rekord!',tc:'tup',ti:'ti-trending-up',f:'Parim'},{n:'Põlvede nurk',v:'110°',tr:'Täiuslik',tc:'tup',ti:'ti-trending-up',f:'Ideaalne'},{n:'Pea kõrgus',v:'96%',tr:'Ühtlane',tc:'tup',ti:'ti-trending-up',f:'Suurepärane'},{n:'Reaktsioon',v:'0.28 s',tr:'Eesmärk täidetud!',tc:'tup',ti:'ti-trending-up',f:'Alla 0.30 s'}]]},
+  {id:'b3',name:'Form Shooting',icon:'🎯',tag:'Vise',tc:'tpu',lv:'algaja',dur:'5 min',sets:1,setDur:120,rest:0,builtin:true,active:true,
+   desc:'Viske tehnika kinnistamine lihaste mälu jaoks.',
+   steps:['Jalad õlgade laiusel, domineeriv jalg ees','Küünar 90° all, randme lõdvestusel','Vii pall üles sujuva liigutusega','Randme keeratus alla — "kana tiib"','Korda 50× sama liigutusega'],
+   errors:['Küünar külgedele','Randme mittetäielik keeramine'],
+   stats:[{n:'Küünarnuki nurk',v:'—',tc:'tne',ti:'ti-minus',f:'85–95°'},{n:'Randme',v:'—',tc:'tne',ti:'ti-minus',f:'Lõpetusasend'},{n:'Tasakaal',v:'—',tc:'tne',ti:'ti-minus',f:'Puusad ja õlad'},{n:'Kordused',v:'—',tc:'tne',ti:'ti-minus',f:'AI loendab'}],
+   live:[[{n:'Küünarnuki nurk',v:'89°',tr:'Ideaalne',tc:'tup',ti:'ti-trending-up',f:'85–95°'},{n:'Randme',v:'76%',tr:'Ebaühtlane',tc:'tne',ti:'ti-alert-circle',f:'Korda harjutust'},{n:'Tasakaal',v:'92%',tr:'Väga hea',tc:'tup',ti:'ti-trending-up',f:'Joondus täiuslik'},{n:'Kordused',v:'12',tr:'Hea tempo',tc:'tup',ti:'ti-trending-up',f:'AI loeb'}]]},
+];
+
+var COLORS=['#FF6B1A','#378ADD','#1D9E75','#7F77DD','#D85A30','#E24B4A','#EF9F27','#D4537E'];
+var CATS={tor:'Palli kontroll',tbl:'Rütm',ttl:'Jalgade töö',tpu:'Vise',tgy:'Muu'};
+
+var BADGES=[
+  {id:'first',name:'Esimene treening',desc:'Esimene kanne',icon:'⭐',r:'bp-silver'},
+  {id:'str3',name:'3 päeva järjest',desc:'3-päevane seeria',icon:'🔥',r:'bp-bronze'},
+  {id:'str7',name:'Nädal järjest',desc:'7-päevane seeria',icon:'🔥',r:'bp-gold'},
+  {id:'d10',name:'10 harjutust',desc:'10 lõpetatud',icon:'💪',r:'bp-bronze'},
+  {id:'d50',name:'50 harjutust',desc:'50 lõpetatud',icon:'💪',r:'bp-silver'},
+  {id:'d100',name:'100 harjutust',desc:'100 lõpetatud',icon:'🏆',r:'bp-gold'},
+  {id:'ball',name:'Palli meister',desc:'20+ palli kontrolli',icon:'🏀',r:'bp-blue'},
+  {id:'def',name:'Kaitsja',desc:'10+ kaitse harjutust',icon:'🛡',r:'bp-pu'},
+  {id:'shoot',name:'Täpne kütt',desc:'15+ vise harjutust',icon:'🎯',r:'bp-tl'},
+  {id:'foot',name:'Kiiruse kuningas',desc:'15+ jalgade töö',icon:'⚡',r:'bp-blue'},
+  {id:'h5',name:'5 tundi',desc:'5 tundi treenitud',icon:'⏱',r:'bp-bronze'},
+  {id:'h20',name:'20 tundi',desc:'20 tundi treenitud',icon:'⏱',r:'bp-gold'},
+  {id:'custom',name:'Esimene eriteema',desc:'Treeneri harjutus',icon:'✨',r:'bp-blue'},
+];
+
+// ═══════════════════════════════════════════
+//  STATE + LOCALSTORAGE
+// ═══════════════════════════════════════════
+var LS='ciq_v3';
+var ST={players:[],sessions:[],customDrills:[],avail:{},gsUrl:SHEETS_URL,globalSessions:[],selPlayer:null,goals:{}};
+
+function lsLoad(){
+  try{var r=localStorage.getItem(LS);if(r){var d=JSON.parse(r);ST.players=d.players||[];ST.sessions=d.sessions||[];ST.customDrills=d.customDrills||[];ST.avail=d.avail||{};ST.gsUrl=d.gsUrl||SHEETS_URL;ST.globalSessions=d.globalSessions||[];ST.selPlayer=d.selPlayer||null;ST.goals=d.goals||{};}}catch(e){}
+}
+function lsSave(){try{localStorage.setItem(LS,JSON.stringify(ST));}catch(e){}}
+
+function allDrills(){return BUILTIN.concat(ST.customDrills||[]);}
+function activeDrills(){return allDrills().filter(function(d){return d.active!==false;});}
+function ini(n){return n.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();}
+function qs(id){return document.getElementById(id);}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+function showEl(id,v){var e=qs(id);if(e)e.style.display=v||'block';}
+function hideEl(id){var e=qs(id);if(e)e.style.display='none';}
+
+// ═══════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════
+function toast(msg,type){
+  var t=qs('toast');
+  qs('toastDot').style.background=type==='ok'?'var(--tl)':type==='err'?'var(--rd)':'#EF9F27';
+  qs('toastMsg').textContent=msg;
+  t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);
+}
+
+// ═══════════════════════════════════════════
+//  ROLE
+// ═══════════════════════════════════════════
+var ROLE='coach',CUST_PID=null;
+var MY_PID_KEY='ciq_my_pid';
+var COACH_TABS=[{id:'home',l:'Avaleht'},{id:'drills',l:'Harjutused'},{id:'players',l:'Mängijad'},{id:'exercises',l:'Haldus'},{id:'leaderboard',l:'Edetabel'},{id:'availability',l:'Saadavus'},{id:'settings',l:'Seaded'}];
+var PLAYER_TABS=[{id:'home',l:'Avaleht'},{id:'drills',l:'Harjutused'},{id:'availability',l:'Saadavus'},{id:'leaderboard',l:'Areng'}];
+
+function myStoredPid(){try{return localStorage.getItem(MY_PID_KEY);}catch(e){return null;}}
+function setMyStoredPid(id){try{if(id)localStorage.setItem(MY_PID_KEY,id);else localStorage.removeItem(MY_PID_KEY);}catch(e){}}
+
+function selectRole(role){
+  ROLE=role;
+  hideEl('roleScreen');hideEl('playerPickerScreen');hideEl('playerCreateScreen');showEl('mainApp');
+  if(role==='player'){qs('roleBadge').textContent='Mängija';qs('roleBadge').className='rbadge cust';buildNav(PLAYER_TABS);}
+  else{qs('roleBadge').textContent='Treener';qs('roleBadge').className='rbadge';buildNav(COACH_TABS);}
+  switchView('home');initHome();setTimeout(animBall,120);
+}
+
+function renderPlayerPickerList(){
+  var list=qs('ppExisting');
+  if(!ST.players.length){list.innerHTML='<div style="font-size:12px;color:var(--di);text-align:center;padding:8px 0">Veel pole ühtegi mängijat — loo enda profiil!</div>';return;}
+  list.innerHTML='';
+  ST.players.forEach(function(p){
+    var card=document.createElement('div');
+    card.className='pcard';card.style.cssText='display:flex;align-items:center;gap:11px;padding:11px 13px';
+    card.innerHTML='<div class="pav" style="background:'+p.color+'22;color:'+p.color+';margin-bottom:0;flex-shrink:0">'+ini(p.name)+'</div><div><div class="pname" style="margin-bottom:1px">'+p.name+'</div><div class="ppos" style="margin-bottom:0">'+p.pos+'</div></div>';
+    card.addEventListener('click',function(){CUST_PID=p.id;setMyStoredPid(p.id);selectRole('player');});
+    list.appendChild(card);
+  });
+}
+
+function openPlayerPicker(){
+  // if this device already has a remembered player, skip straight in
+  var remembered=myStoredPid();
+  if(remembered&&ST.players.find(function(p){return p.id===remembered;})){
+    CUST_PID=remembered;selectRole('player');return;
+  }
+  hideEl('roleScreen');
+  renderPlayerPickerList();
+  showEl('playerPickerScreen','flex');
+}
+
+function closePlayerPicker(){hideEl('playerPickerScreen');showEl('roleScreen','flex');}
+
+var pcSelColor='#FF6B1A';
+function openPlayerCreate(){
+  hideEl('playerPickerScreen');
+  qs('pcName').value='';qs('pcAge').value='';
+  var colorList=['#FF6B1A','#378ADD','#1D9E75','#7F77DD','#D85A30','#E24B4A','#EF9F27','#D4537E'];
+  pcSelColor=colorList[Math.floor(Math.random()*colorList.length)];
+  qs('pcColorPicker').innerHTML=colorList.map(function(c){return '<div class="copt'+(c===pcSelColor?' sel':'')+'" style="background:'+c+'" data-c="'+c+'"></div>';}).join('');
+  qs('pcColorPicker').querySelectorAll('.copt').forEach(function(el){
+    el.addEventListener('click',function(){pcSelColor=el.dataset.c;qs('pcColorPicker').querySelectorAll('.copt').forEach(function(x){x.classList.remove('sel');});el.classList.add('sel');});
+  });
+  showEl('playerCreateScreen','flex');
+}
+function closePlayerCreate(){hideEl('playerCreateScreen');renderPlayerPickerList();showEl('playerPickerScreen','flex');}
+
+function createOwnPlayer(){
+  var name=(qs('pcName').value||'').trim();
+  if(!name){qs('pcName').focus();return;}
+  var newP={id:Date.now().toString(),name:name,pos:qs('pcPos').value,age:qs('pcAge').value,color:pcSelColor};
+  ST.players.push(newP);lsSave();
+  CUST_PID=newP.id;setMyStoredPid(newP.id);
+  toast('Tere tulemast, '+name+'!','ok');
+  selectRole('player');
+}
+
+function switchRoleScreen(){
+  hideEl('mainApp');hideEl('playerPickerScreen');hideEl('playerCreateScreen');
+  showEl('roleScreen','flex');
+}
+
+function forgetMyProfile(){
+  setMyStoredPid(null);
+  switchRoleScreen();
+}
+
+function buildNav(tabs){
+  qs('navTabs').innerHTML=tabs.map(function(t){return '<button class="tab" data-v="'+t.id+'">'+t.l+'</button>';}).join('');
+  qs('navTabs').querySelectorAll('.tab').forEach(function(b){b.addEventListener('click',function(){switchView(b.dataset.v);});});
+}
+
+function switchView(n){
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('on');});
+  var el=qs('view-'+n);if(el)el.classList.add('on');
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('on',t.dataset.v===n);});
+  if(n==='drills')renderAllDrills();
+  if(n==='players'){renderPlayers();closeDetail();}
+  if(n==='exercises')renderExManage();
+  if(n==='leaderboard')renderLeaderboard();
+  if(n==='availability')renderAvail();
+  if(n==='settings')loadSettings();
+}
+
+// ═══════════════════════════════════════════
+//  BADGES
+// ═══════════════════════════════════════════
+function calcBadges(pid){
+  var ss=ST.sessions.filter(function(s){return s.pid===pid;});
+  var earned=[];
+  if(ss.length>=1)earned.push('first');
+  if(ss.length>=10)earned.push('d10');
+  if(ss.length>=50)earned.push('d50');
+  if(ss.length>=100)earned.push('d100');
+  var mins=ss.reduce(function(a,s){return a+(+s.dur||0);},0);
+  if(mins>=300)earned.push('h5');
+  if(mins>=1200)earned.push('h20');
+  function catN(c){return ss.filter(function(s){var d=allDrills().find(function(x){return x.name===s.drill;});return d&&d.tc===c;}).length;}
+  if(catN('tor')>=20)earned.push('ball');
+  if(catN('ttl')>=15)earned.push('foot');
+  if(catN('tpu')>=15)earned.push('shoot');
+  function catNDef(c){return ss.filter(function(s){var d=allDrills().find(function(x){return x.name===s.drill;});return d&&(d.tag==='Kaitse'||d.tc==='tgy');}).length;}
+  if(catNDef()>=10)earned.push('def');
+  if(ss.some(function(s){return (ST.customDrills||[]).find(function(x){return x.name===s.drill;});}))earned.push('custom');
+  var dates=Array.from(new Set(ss.map(function(s){return s.date;}))).sort();
+  var mx=0,cur=1;
+  for(var i=1;i<dates.length;i++){var df=(new Date(dates[i])-new Date(dates[i-1]))/86400000;cur=df===1?cur+1:1;mx=Math.max(mx,cur);}
+  if(dates.length)mx=Math.max(mx,1);
+  if(mx>=3)earned.push('str3');if(mx>=7)earned.push('str7');
+  return earned;
+}
+
+// ═══════════════════════════════════════════
+//  PLAYERS
+// ═══════════════════════════════════════════
+function renderPlayers(){
+  var g=qs('playerGrid');if(!g)return;
+  if(!ST.players.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--mu)"><div style="font-size:36px;margin-bottom:10px">🏀</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:16px;text-transform:uppercase;letter-spacing:.04em">Lisa esimene mängija</div></div>';return;}
+  g.innerHTML='';
+  ST.players.forEach(function(p){
+    var ss=ST.sessions.filter(function(s){return s.pid===p.id;});
+    var mins=ss.reduce(function(a,s){return a+(+s.dur||0);},0);
+    var badges=calcBadges(p.id);
+    var card=document.createElement('div');card.className='pcard';
+    card.innerHTML='<button class="delbtn" data-pid="'+p.id+'">✕</button><div class="pav" style="background:'+p.color+'22;color:'+p.color+'">'+ini(p.name)+'</div><div class="pname">'+p.name+'</div><div class="ppos">'+p.pos+(p.age?' · '+p.age+' a':'')+'</div><div class="pmini"><div><div class="mn">'+ss.length+'</div><div class="ml">Kanded</div></div><div><div class="mn">'+Math.round(mins/60*10)/10+'h</div><div class="ml">Aeg</div></div><div><div class="mn">'+badges.length+'</div><div class="ml">Märgid</div></div></div><div class="pbadges">'+badges.slice(0,3).map(function(bid){var b=BADGES.find(function(x){return x.id===bid;});return b?'<span class="bpill '+b.r+'">'+b.icon+' '+b.name+'</span>':''}).join('')+'</div>';
+    card.querySelector('.delbtn').addEventListener('click',function(e){e.stopPropagation();delPlayer(p.id);});
+    card.addEventListener('click',function(){openPDetail(p.id);});
+    g.appendChild(card);
+  });
+}
+
+function openPDetail(id){
+  ST.selPlayer=id;lsSave();
+  var p=ST.players.find(function(x){return x.id===id;});if(!p)return;
+  var ss=ST.sessions.filter(function(s){return s.pid===id;}).sort(function(a,b){return b.date.localeCompare(a.date);});
+  var mins=ss.reduce(function(a,s){return a+(+s.dur||0);},0);
+  var badges=calcBadges(id);
+  qs('detailTitle').textContent=p.name;
+  qs('detailName').textContent=p.name;
+  qs('detailPos').textContent=p.pos+(p.age?' · '+p.age+' aastat':'');
+  var av=qs('detailAv');av.textContent=ini(p.name);av.style.background=p.color+'22';av.style.color=p.color;
+  qs('detailStats').innerHTML='<div class="dst"><div class="dstn">'+ss.length+'</div><div class="dstl">Kanded</div></div><div class="dst"><div class="dstn">'+Math.round(mins/60*10)/10+'h</div><div class="dstl">Kokku</div></div><div class="dst"><div class="dstn">'+badges.length+'</div><div class="dstl">Saavutust</div></div><div class="dst"><div class="dstn">'+Array.from(new Set(ss.map(function(s){return s.drill;}))).length+'</div><div class="dstl">Harjutuse tüüpi</div></div>';
+  var bg=qs('detailBadges');
+  bg.innerHTML=badges.length?badges.map(function(bid){var b=BADGES.find(function(x){return x.id===bid;});if(!b)return '';var rcls='r-'+b.r.replace('bp-','');return '<div class="bcard '+rcls+'"><span class="bci-big">'+b.icon+'</span><div><div class="bcn">'+b.name+'</div><div class="bcd">'+b.desc+'</div></div></div>';}).join(''):'<div style="color:var(--di);font-size:12px">Alusta treenimist!</div>';
+  qs('logDrill').innerHTML=activeDrills().map(function(d){return '<option>'+d.name+'</option>';}).join('');
+  qs('logDate').value=new Date().toISOString().split('T')[0];
+  qs('sessionHist').innerHTML=ss.length?ss.map(function(s){return '<div style="background:var(--c2);border-radius:9px;padding:11px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.02em">'+s.drill+'</div><div style="font-size:10px;color:var(--mu);margin-top:2px">'+s.date+' · '+s.dur+' min · '+s.int+'</div>'+(s.notes?'<div style="font-size:11px;color:var(--di);margin-top:3px">'+s.notes+'</div>':'')+'</div><span style="font-size:9px;padding:3px 6px;border-radius:4px;background:var(--ord);color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0">'+s.int+'</span></div>';}).join(''):'<div style="color:var(--di);font-size:12px;padding:10px 0">Pole kandeid.</div>';
+  qs('playerGrid').style.display='none';
+  qs('phdr')&&(qs('phdr').style.display='none');
+  showEl('playerDetail');
+}
+
+function closeDetail(){
+  ST.selPlayer=null;
+  qs('playerGrid').style.display='grid';
+  var ph=qs('phdr');if(ph)ph.style.display='flex';
+  hideEl('playerDetail');
+}
+
+function delPlayer(id){
+  if(!confirm('Kustutad mängija ja kõik kanded?'))return;
+  ST.players=ST.players.filter(function(p){return p.id!==id;});
+  ST.sessions=ST.sessions.filter(function(s){return s.pid!==id;});
+  lsSave();renderPlayers();toast('Mängija kustutatud','err');
+}
+
+// ═══════════════════════════════════════════
+//  ADD PLAYER MODAL
+// ═══════════════════════════════════════════
+var selColor=COLORS[0];
+function openAddPlayer(){
+  qs('colorPicker').innerHTML=COLORS.map(function(c,i){return '<div class="copt'+(i===0?' sel':'')+'" style="background:'+c+'" data-c="'+c+'"></div>';}).join('');
+  selColor=COLORS[0];
+  qs('colorPicker').querySelectorAll('.copt').forEach(function(el){el.addEventListener('click',function(){selColor=el.dataset.c;qs('colorPicker').querySelectorAll('.copt').forEach(function(x){x.classList.remove('sel');});el.classList.add('sel');});});
+  showEl('addPlayerModal','flex');
+}
+function closeAddPlayer(){hideEl('addPlayerModal');}
+function savePlayer(){
+  var name=(qs('apName').value||'').trim();if(!name){qs('apName').focus();return;}
+  ST.players.push({id:Date.now().toString(),name:name,pos:qs('apPos').value,age:qs('apAge').value,color:selColor});
+  lsSave();closeAddPlayer();renderPlayers();toast(name+' lisatud!','ok');
+  qs('apName').value='';qs('apAge').value='';
+}
+
+// ═══════════════════════════════════════════
+//  SESSION LOGGING
+// ═══════════════════════════════════════════
+function saveSession(){
+  var pid=ST.selPlayer;if(!pid){toast('Vali mängija','err');return;}
+  var dur=qs('logDur').value,date=qs('logDate').value;
+  if(!dur||!date){toast('Täida kestus ja kuupäev','err');return;}
+  var beforeBadges=calcBadges(pid);
+  var rec={id:Date.now().toString(),pid:pid,drill:qs('logDrill').value,dur:+dur,date:date,int:qs('logInt').value,notes:(qs('logNotes').value||'').trim(),synced:false};
+  ST.sessions.push(rec);lsSave();
+  var afterBadges=calcBadges(pid);
+  var newBadges=afterBadges.filter(function(b){return beforeBadges.indexOf(b)===-1;});
+  openPDetail(pid);updateProgress();toast('Kanne salvestatud!','ok');
+  qs('logDur').value='';qs('logNotes').value='';
+  if(newBadges.length){window._pendingBadgeQueue=(window._pendingBadgeQueue||[]).concat(newBadges);playBadgeQueue();}
+}
+
+async function gsPost(url,payload){
+  // text/plain avoids a CORS preflight against Apps Script (which can't handle OPTIONS),
+  // while still letting us read the real response — unlike mode:'no-cors' which is always opaque.
+  var resp=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+  var text=await resp.text();
+  var data;
+  try{data=JSON.parse(text);}catch(e){throw new Error('Vastus polnud JSON (kas URL on õige ja juurdepääs "Kõigile"?): '+text.slice(0,120));}
+  if(!data.ok) throw new Error(data.error||'Tundmatu viga skriptis');
+  return data;
+}
+
+async function testSheetsConnection(){
+  var url=(qs('gsUrl').value||'').trim();
+  if(!url){toast('Sisesta URL enne testimist','warn');return;}
+  var btn=qs('gsTestBtn');
+  if(btn){btn.disabled=true;btn.textContent='Testin...';}
+  try{
+    await gsPost(url,{type:'session','kuupäev':new Date().toISOString().split('T')[0],mängija:'TEST ÜHENDUS',harjutus:'Connection Test',kestus:0,intensiivsus:'test','märkmed':'Automaatne ühenduse test Court IQ rakendusest'});
+    toast('Ühendus töötab! Kontrolli "Kanded" lehte — peaks olema rida "TEST ÜHENDUS".','ok');
+  }catch(e){
+    toast('Ühendus ebaõnnestus: '+e.message,'err');
+  }
+  if(btn){btn.disabled=false;btn.textContent='Testi ühendust';}
+}
+
+async function syncSessionsToSheets(silent){
+  var url=ST.gsUrl;if(!url){if(!silent){toast('Lisa Apps Script URL seadetes','warn');switchView('settings');}return{ok:0,fail:0,total:0};}
+  var ss=ST.sessions.filter(function(s){return !s.synced;});
+  var ok=0,fail=0;
+  for(var i=0;i<ss.length;i++){
+    var s=ss[i];
+    var p=ST.players.find(function(x){return x.id===s.pid;});
+    if(!p){fail++;continue;}
+    try{
+      await gsPost(url,{type:'session','kuupäev':s.date,mängija:p.name,harjutus:s.drill,kestus:s.dur,intensiivsus:s.int,'märkmed':s.notes||''});
+      var rec=ST.sessions.find(function(x){return x.id===s.id;});if(rec)rec.synced=true;ok++;
+    }catch(e){fail++;}
+  }
+  lsSave();
+  return{ok:ok,fail:fail,total:ss.length};
+}
+
+async function syncPlayersToSheets(){
+  var url=ST.gsUrl;if(!url)return{ok:0,fail:0,total:0};
+  var ok=0,fail=0;
+  for(var i=0;i<ST.players.length;i++){
+    var p=ST.players[i];
+    try{
+      await gsPost(url,{type:'player',id:p.id,nimi:p.name,positsioon:p.pos,vanus:p.age||''});
+      ok++;
+    }catch(e){fail++;}
+  }
+  return{ok:ok,fail:fail,total:ST.players.length};
+}
+
+async function syncDrillsToSheets(){
+  var url=ST.gsUrl;if(!url)return{ok:0,fail:0,total:0};
+  var drills=allDrills();
+  var ok=0,fail=0;
+  for(var i=0;i<drills.length;i++){
+    var d=drills[i];
+    try{
+      await gsPost(url,{type:'drill',id:d.id,nimi:d.name,kategooria:d.tag,tase:d.lv,kestus:d.dur,aktiivne:d.active!==false});
+      ok++;
+    }catch(e){fail++;}
+  }
+  return{ok:ok,fail:fail,total:drills.length};
+}
+
+async function syncToSheets(){
+  // called from the player-detail "↑ Google Sheets" button — syncs everything, not just the open player,
+  // since sessions reference players and players/drills must exist for the sheet to make sense.
+  var url=ST.gsUrl;if(!url){toast('Lisa Apps Script URL seadetes','warn');switchView('settings');return;}
+  var btn=qs('logSync');if(btn){btn.disabled=true;btn.textContent='Saadan...';}
+  var sRes=await syncSessionsToSheets(true);
+  if(btn){btn.disabled=false;btn.textContent='↑ Google Sheets';}
+  if(sRes.total===0){toast('Kõik kanded on juba sünkroonitud','ok');return;}
+  toast(sRes.ok+'/'+sRes.total+' kannet saadetud'+(sRes.fail?' ('+sRes.fail+' ebaõnnestus)':''),sRes.fail?'err':'ok');
+}
+
+async function syncAllToSheets(){
+  var url=ST.gsUrl;if(!url){toast('Lisa Apps Script URL seadetes','warn');return;}
+  var btn=qs('gsSyncAllBtn');if(btn){btn.disabled=true;btn.textContent='Sünkroonin...';}
+  var pRes=await syncPlayersToSheets();
+  var dRes=await syncDrillsToSheets();
+  var sRes=await syncSessionsToSheets(true);
+  if(btn){btn.disabled=false;btn.textContent='↑ Sünkrooni kõik';}
+  var failTotal=pRes.fail+dRes.fail+sRes.fail;
+  toast('Mängijad '+pRes.ok+'/'+pRes.total+' · Harjutused '+dRes.ok+'/'+dRes.total+' · Kanded '+sRes.ok+'/'+sRes.total+(failTotal?' — kontrolli URL-i':''),failTotal?'err':'ok');
+}
+
+// ═══════════════════════════════════════════
+//  CUSTOM EXERCISES
+// ═══════════════════════════════════════════
+var editExId=null;
+function openExForm(id){
+  editExId=id||null;
+  qs('exModalTitle').textContent=id?'Muuda harjutust':'Uus harjutus';
+  qs('stepInputs').innerHTML='';
+  if(id){var ex=(ST.customDrills||[]).find(function(x){return x.id===id;});if(ex){qs('exName').value=ex.name;qs('exIcon').value=ex.icon||'🏀';qs('exCat').value=ex.tc;qs('exLevel').value=ex.lv;qs('exDur').value=ex.dur;qs('exDesc').value=ex.desc;qs('exActive').checked=ex.active!==false;(ex.steps||[]).forEach(function(s){addStepInp(s);});showEl('exModal','flex');return;}}
+  qs('exName').value='';qs('exIcon').value='🏀';qs('exDesc').value='';qs('exActive').checked=true;
+  addStepInp();addStepInp();addStepInp();
+  showEl('exModal','flex');
+}
+function closeExForm(){hideEl('exModal');}
+function addStepInp(v){
+  v=v||'';var row=document.createElement('div');row.className='steprow';
+  row.innerHTML='<input type="text" placeholder="Samm..." value="'+v.replace(/"/g,'&quot;')+'"><button class="rmstep">✕</button>';
+  row.querySelector('.rmstep').addEventListener('click',function(){row.remove();});
+  qs('stepInputs').appendChild(row);
+}
+function saveEx(){
+  var name=(qs('exName').value||'').trim();if(!name){qs('exName').focus();return;}
+  var steps=Array.from(qs('stepInputs').querySelectorAll('input')).map(function(i){return i.value.trim();}).filter(Boolean);
+  var tc=qs('exCat').value;
+  var ex={id:editExId||('c'+Date.now()),name:name,icon:qs('exIcon').value||'🏀',tag:CATS[tc],tc:tc,lv:qs('exLevel').value,dur:qs('exDur').value||'10 min',desc:(qs('exDesc').value||'').trim(),steps:steps,active:qs('exActive').checked,builtin:false,sets:3,setDur:30,rest:15,
+    errors:['Hoia õige asend'],stats:[{n:'Sooritus',v:'—',tc:'tne',ti:'ti-minus',f:'AI analüüsib'},{n:'Asend',v:'—',tc:'tne',ti:'ti-minus',f:'Keha'},{n:'Rütm',v:'—',tc:'tne',ti:'ti-minus',f:'Tempo'},{n:'Kordused',v:'—',tc:'tne',ti:'ti-minus',f:'AI loendab'}],
+    live:[[{n:'Sooritus',v:'Alustad',tr:'AI kalibreerub',tc:'tne',ti:'ti-minus',f:'Esimene seeria'},{n:'Asend',v:'—',tr:'Mõõdan...',tc:'tne',ti:'ti-minus',f:''},{n:'Rütm',v:'—',tr:'Analüüsin...',tc:'tne',ti:'ti-minus',f:''},{n:'Kordused',v:'—',tr:'',tc:'tne',ti:'ti-minus',f:''}]]};
+  if(!ST.customDrills)ST.customDrills=[];
+  if(editExId){var idx=ST.customDrills.findIndex(function(x){return x.id===editExId;});if(idx>=0)ST.customDrills[idx]=ex;else ST.customDrills.push(ex);}
+  else ST.customDrills.push(ex);
+  lsSave();closeExForm();renderExManage();renderAllDrills();initHome();toast(name+' salvestatud!','ok');
+}
+function toggleEx(id){var ex=(ST.customDrills||[]).find(function(x){return x.id===id;});if(ex){ex.active=!ex.active;lsSave();renderExManage();renderAllDrills();toast(ex.active?'Aktiveeritud':'Peidetud','ok');}}
+function delEx(id){if(!confirm('Kustutad harjutuse?'))return;ST.customDrills=(ST.customDrills||[]).filter(function(x){return x.id!==id;});lsSave();renderExManage();renderAllDrills();toast('Kustutatud','err');}
+
+function renderExManage(){
+  var el=qs('exManageList');if(!el)return;
+  var h='<div style="font-size:11px;color:var(--di);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:7px">Sisseehitatud ('+BUILTIN.length+')</div>';
+  BUILTIN.forEach(function(ex){h+='<div class="exrow"><div style="display:flex;align-items:center;gap:9px;flex:1"><span style="font-size:18px">'+ex.icon+'</span><div><div class="exnm">'+ex.name+'</div><div class="exmeta">'+ex.tag+' · '+ex.lv+' · '+ex.dur+'</div></div></div><span style="font-size:9px;padding:2px 8px;border-radius:4px;background:rgba(29,158,117,.15);color:var(--tl);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Sisseehitatud</span></div>';});
+  var custom=ST.customDrills||[];
+  if(custom.length){
+    h+='<div style="font-size:11px;color:var(--di);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin:14px 0 7px">Treeneri harjutused ('+custom.length+')</div>';
+    custom.forEach(function(ex){h+='<div class="exrow"><div style="display:flex;align-items:center;gap:9px;flex:1"><span style="font-size:18px">'+ex.icon+'</span><div><div class="exnm">'+ex.name+'</div><div class="exmeta">'+ex.tag+' · '+ex.lv+' · '+ex.dur+' · '+(ex.active!=='false'&&ex.active?'<span style="color:var(--tl)">Aktiivne</span>':'<span style="color:var(--rd)">Peidetud</span>')+'</div></div></div><div class="exact"><button class="ibtn '+(ex.active?'on':'')+'" data-eid="'+ex.id+'" data-act="tog">'+(ex.active?'👁':'🙈')+'</button><button class="ibtn" data-eid="'+ex.id+'" data-act="edit">✏️</button><button class="ibtn" data-eid="'+ex.id+'" data-act="del" style="color:var(--rd)">🗑</button></div></div>';});
+  } else {h+='<div style="text-align:center;padding:30px 0;color:var(--mu)"><div style="font-size:28px;margin-bottom:8px">📋</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase">Pole kohandatud harjutusi</div></div>';}
+  el.innerHTML=h;
+  el.querySelectorAll('[data-act]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var id=b.dataset.eid,act=b.dataset.act;
+      if(act==='tog')toggleEx(id);
+      else if(act==='edit'){openExForm(id);}
+      else if(act==='del')delEx(id);
+    });
+  });
+}
+
+// ═══════════════════════════════════════════
+//  AVAILABILITY
+// ═══════════════════════════════════════════
+function renderAvail(){
+  var el=qs('availContent');if(!el)return;
+  var ex=qs('availExplain');
+  if(ex)ex.textContent=ROLE==='coach'
+    ?'Märgi treeningu kuupäev ja vaata, kes mängijatest on kinnitanud tulekut. See ei ole treeningu logimine — vaid lihtne kohaloleku kinnitus.'
+    :'Treener valib treeningu kuupäeva ja sina kinnitad, kas tuled kohale. See on eraldi treeningu enda logimisest (mida teed Avalehel).';
+  var di=qs('availDate');if(!di.value)di.value=new Date().toISOString().split('T')[0];
+  var date=di.value;di.onchange=renderAvail;
+  if(!ST.players.length){el.innerHTML='<div style="text-align:center;padding:40px 0;color:var(--mu)"><div style="font-size:32px;margin-bottom:8px">📅</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:15px;text-transform:uppercase">Lisa mängijaid esmalt</div></div>';return;}
+  var da=ST.avail[date]||{};
+  if(ROLE==='coach'){
+    var avl=ST.players.filter(function(p){return da[p.id]==='yes';});
+    var navl=ST.players.filter(function(p){return da[p.id]==='no';});
+    var unk=ST.players.filter(function(p){return !da[p.id];});
+    var h='<div class="sgrid" style="margin-bottom:14px"><div class="sc"><div class="scn" style="color:var(--tl)">'+avl.length+'</div><div class="scl">Saadaval</div></div><div class="sc"><div class="scn" style="color:var(--rd)">'+navl.length+'</div><div class="scl">Ei tule</div></div><div class="sc"><div class="scn" style="color:var(--mu)">'+unk.length+'</div><div class="scl">Vastamata</div></div></div><div class="avgrid">';
+    ST.players.forEach(function(p){var st=da[p.id]||'';h+='<div class="avcard '+(st==='yes'?'yes':st==='no'?'no':'')+'"><div style="display:flex;align-items:center;gap:9px;margin-bottom:7px"><div style="width:32px;height:32px;border-radius:50%;background:'+p.color+'22;color:'+p.color+';display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:12px;flex-shrink:0">'+ini(p.name)+'</div><div><div class="avname">'+p.name+'</div><div class="avpos">'+p.pos+'</div></div></div><div class="avtog"><button class="avbtn yes '+(st==='yes'?'on':'')+'" data-pid="'+p.id+'" data-date="'+date+'" data-st="yes">✓ Tuleb</button><button class="avbtn no '+(st==='no'?'on':'')+'" data-pid="'+p.id+'" data-date="'+date+'" data-st="no">✕ Ei tule</button></div></div>';});
+    h+='</div>';el.innerHTML=h;
+  } else {
+    var pid=CUST_PID;var p=ST.players.find(function(x){return x.id===pid;});if(!p){el.innerHTML='';return;}
+    var st=(ST.avail[date]||{})[pid]||'';
+    var h='<div class="pdcard" style="max-width:400px"><div class="pdhdr"><div class="pdav" style="background:'+p.color+'22;color:'+p.color+'">'+ini(p.name)+'</div><div><div class="pdname">'+p.name+'</div><div class="pdpos">'+p.pos+'</div></div></div><div style="font-size:13px;color:var(--mu);margin-bottom:12px">Kas tuled treeninguele <b style="color:var(--tx)">'+date+'</b>?</div><div style="display:flex;gap:9px"><button class="btn '+(st==='yes'?'or':'')+'" data-pid="'+pid+'" data-date="'+date+'" data-st="yes">✓ Tulen</button><button class="btn rd '+(st==='no'?'on':'')+'" data-pid="'+pid+'" data-date="'+date+'" data-st="no">✕ Ei tule</button></div>'+(st?'<div style="margin-top:10px;font-size:12px;color:var(--mu)">Vastus: <b style="color:'+(st==='yes'?'var(--tl)':'var(--rd)')+'">'+( st==='yes'?'Tulen':'Ei tule')+'</b></div>':'')+'</div>';
+    var h2='<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.04em;margin:14px 0 10px">Selle nädala saadavus</div><div style="display:flex;gap:5px;flex-wrap:wrap">';
+    for(var i=0;i<7;i++){var d=new Date();d.setDate(d.getDate()-d.getDay()+1+i);var ds=d.toISOString().split('T')[0];var sv=(ST.avail[ds]||{})[pid]||'';var days=['E','T','K','N','R','L','P'];h2+='<div style="flex:1;min-width:36px;background:var(--c1);border-radius:7px;padding:7px 3px;text-align:center;border:1px solid '+(sv==='yes'?'var(--tl)':sv==='no'?'var(--rd)':'var(--b2)')+'"><div style="font-size:9px;color:var(--di);text-transform:uppercase;margin-bottom:3px">'+days[i]+'</div><div style="font-size:13px">'+(sv==='yes'?'✓':sv==='no'?'✕':'·')+'</div></div>';}
+    h2+='</div>';
+    el.innerHTML=h+h2;
+  }
+  el.querySelectorAll('[data-st]').forEach(function(b){b.addEventListener('click',function(){setAvail(b.dataset.date,b.dataset.pid,b.dataset.st);renderAvail();});});
+}
+
+function setAvail(date,pid,st){
+  if(!ST.avail)ST.avail={};if(!ST.avail[date])ST.avail[date]={};
+  ST.avail[date][pid]=st;lsSave();toast('Saadavus salvestatud','ok');
+}
+
+// ═══════════════════════════════════════════
+//  LEADERBOARD
+// ═══════════════════════════════════════════
+function renderLeaderboard(){
+  updateProgress();
+  populatePlanPlayerSel();
+  var el=qs('lbRows');if(!el)return;
+  if(!ST.players.length){el.innerHTML='<div style="text-align:center;padding:30px 0;color:var(--mu)"><div style="font-size:28px;margin-bottom:8px">🏆</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase">Lisa mängijaid edetabeli nägemiseks</div></div>';return;}
+  var rows=ST.players.map(function(p){var ss=ST.sessions.filter(function(s){return s.pid===p.id;});return{p:p,n:ss.length,min:ss.reduce(function(a,s){return a+(+s.dur||0);},0),badges:calcBadges(p.id)};}).sort(function(a,b){return b.min-a.min;});
+  var rankColors=['var(--or)','#B4B2A9','#D85A30'];
+  el.innerHTML=rows.map(function(r,i){return '<div class="lbrow"><div class="lbrank" style="color:'+(rankColors[i]||'var(--di)')+'">'+( i+1)+'</div><div class="lbav" style="background:'+r.p.color+'22;color:'+r.p.color+'">'+ini(r.p.name)+'</div><div class="lbinfo"><div class="lbname">'+r.p.name+'</div><div class="lbsub">'+r.p.pos+' · '+r.badges.length+' saavutust · '+r.badges.slice(0,3).map(function(bid){var b=BADGES.find(function(x){return x.id===bid;});return b?b.icon:'';}).join(' ')+'</div></div><div class="lbscore"><div class="lbnum">'+Math.round(r.min/60*10)/10+'h</div><div class="lblbl">'+r.n+' kannet</div></div></div>';}).join('');
+  var lbS=qs('lbStats');if(lbS)lbS.innerHTML='<div class="sc"><div class="scn">'+ST.players.length+'</div><div class="scl">Mängijat</div></div><div class="sc"><div class="scn">'+ST.sessions.length+'</div><div class="scl">Kanded kokku</div></div><div class="sc"><div class="scn">'+Math.round(ST.sessions.reduce(function(a,s){return a+(+s.dur||0);},0)/60)+'h</div><div class="scl">Treenitud kokku</div></div><div class="sc"><div class="scn">'+(ST.globalSessions||[]).length+'</div><div class="scl">Harjutust tehtud</div></div>';
+  renderHistogram();
+  renderDevPlan();
+  renderTrendChart();
+  renderGoals();
+}
+
+// ═══════════════════════════════════════════
+//  PROGRESS / SKILLS
+// ═══════════════════════════════════════════
+function updateProgress(){
+  var gs=ST.globalSessions||[];var allS=ST.sessions||[];
+  var today=new Date().toISOString().split('T')[0];
+  var dates=Array.from(new Set(gs.map(function(s){return s.date;}))).sort();
+  var streak=0;
+  if(dates.length){var d=new Date(today);for(var i=dates.length-1;i>=0;i--){if(dates[i]===d.toISOString().split('T')[0]){streak++;d.setDate(d.getDate()-1);}else if(dates[i]<d.toISOString().split('T')[0])break;}}
+  var weekMin=allS.filter(function(s){return(new Date()-new Date(s.date))/86400000<=7;}).reduce(function(a,s){return a+(+s.dur||0);},0);
+  function set(id,v){var e=qs(id);if(e)e.textContent=v;}
+  set('hStr',streak);set('hTot',gs.length);set('hHrs',Math.round(weekMin/60*10)/10+'h');
+  var catC={};allS.forEach(function(s){var d=allDrills().find(function(x){return x.name===s.drill;});if(d)catC[d.tc]=(catC[d.tc]||0)+1;});
+  var maxC=Math.max.apply(null,Object.values(catC).concat([1,10]));
+  function setPct(id,fid,v){var pct=Math.min(100,Math.round((v||0)/maxC*100));set(id,pct+'%');var f=qs(fid);if(f)f.style.width=pct+'%';}
+  setPct('skBall','fBall',catC['tor']);setPct('skFoot','fFoot',catC['ttl']);setPct('skShoot','fShoot',catC['tpu']);setPct('skDef','fDef',catC['tgy']);
+  updateLevelBar();
+}
+
+// ═══════════════════════════════════════════
+//  XP / LEVEL SYSTEM
+// ═══════════════════════════════════════════
+var LEVEL_NAMES=['Algaja','Treenija','Tubli','Osav','Kogenud','Tugev','Vilunud','Meister','Täht','Legend'];
+function xpForLevel(lvl){return Math.round(100*Math.pow(lvl,1.5));} // cumulative XP needed to REACH this level
+
+function calcXP(sessions){
+  var xp=sessions.length*10; // 10 XP per completed session
+  var bd=null;
+  var pid=ROLE==='coach'?ST.selPlayer:(CUST_PID||ST.selPlayer);
+  if(pid) bd=calcBadges(pid);
+  if(bd) xp+=bd.length*25; // 25 XP bonus per badge earned
+  return xp;
+}
+
+function levelFromXP(xp){
+  var lvl=1;
+  while(xp>=xpForLevel(lvl+1)&&lvl<LEVEL_NAMES.length){lvl++;}
+  return lvl;
+}
+
+function updateLevelBar(){
+  var badgeEl=qs('lvlBadge'),nameEl=qs('lvlName'),fillEl=qs('xpFill'),lblEl=qs('xpLbl');
+  if(!badgeEl)return;
+  var sessions=relevantSessions();
+  var xp=calcXP(sessions);
+  var lvl=levelFromXP(xp);
+  var curFloor=xpForLevel(lvl);
+  var nextCeil=xpForLevel(lvl+1);
+  var pct=lvl>=LEVEL_NAMES.length?100:Math.round(((xp-curFloor)/(nextCeil-curFloor))*100);
+  badgeEl.textContent=lvl;
+  nameEl.textContent=LEVEL_NAMES[Math.min(lvl,LEVEL_NAMES.length)-1];
+  fillEl.style.width=Math.max(2,pct)+'%';
+  lblEl.textContent=lvl>=LEVEL_NAMES.length?(xp+' XP · Maksimaalne tase!'):(xp+' / '+nextCeil+' XP');
+}
+
+// ═══════════════════════════════════════════
+//  BADGE UNLOCK CELEBRATION
+// ═══════════════════════════════════════════
+var CONFETTI_COLORS=['#FF6B1A','#FFB347','#1D9E75','#378ADD','#7F77DD','#EF9F27'];
+
+function playUnlockSound(){
+  try{
+    var ctx=new (window.AudioContext||window.webkitAudioContext)();
+    var now=ctx.currentTime;
+    [523.25,659.25,783.99,1046.50].forEach(function(freq,i){ // C-E-G-C arpeggio
+      var osc=ctx.createOscillator(),gain=ctx.createGain();
+      osc.type='triangle';osc.frequency.value=freq;
+      osc.connect(gain);gain.connect(ctx.destination);
+      var t=now+i*0.09;
+      gain.gain.setValueAtTime(0,t);
+      gain.gain.linearRampToValueAtTime(0.13,t+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001,t+0.35);
+      osc.start(t);osc.stop(t+0.4);
+    });
+  }catch(e){}
+}
+
+function spawnConfetti(){
+  var el=qs('buConfetti');if(!el)return;
+  el.innerHTML='';
+  for(var i=0;i<28;i++){
+    var s=document.createElement('span');
+    s.style.left=Math.round(Math.random()*100)+'%';
+    s.style.background=CONFETTI_COLORS[i%CONFETTI_COLORS.length];
+    s.style.animationDelay=(Math.random()*0.4)+'s';
+    s.style.animationDuration=(1.3+Math.random()*0.9)+'s';
+    s.style.borderRadius=Math.random()>0.5?'50%':'2px';
+    el.appendChild(s);
+  }
+}
+
+function playBadgeQueue(){
+  if(window._buShowing)return; // already showing one, the close handler will pick up the next
+  var q=window._pendingBadgeQueue||[];
+  if(!q.length)return;
+  var bid=q.shift();
+  var b=BADGES.find(function(x){return x.id===bid;});
+  if(!b){playBadgeQueue();return;} // skip unknown, try next
+  window._buShowing=true;
+  qs('buIcon').textContent=b.icon;
+  qs('buName').textContent=b.name;
+  qs('buDesc').textContent=b.desc;
+  var overlay=qs('badgeUnlockOverlay');
+  overlay.classList.add('show');
+  spawnConfetti();
+  playUnlockSound();
+}
+
+function closeBadgeUnlock(){
+  qs('badgeUnlockOverlay').classList.remove('show');
+  window._buShowing=false;
+  setTimeout(playBadgeQueue,250); // show next queued badge, if any
+}
+
+function renderHistogram(){
+  var el=qs('histogram');if(!el)return;el.innerHTML='';
+  var gs=ST.globalSessions||[];var now=new Date();
+  var days=['E','T','K','N','R','L','P'];
+  var counts=Array.from({length:7},function(_,i){var d=new Date(now);d.setDate(d.getDate()-6+i);var ds=d.toISOString().split('T')[0];return{day:days[d.getDay()===0?6:d.getDay()-1],n:gs.filter(function(s){return s.date===ds;}).length};});
+  var mx=Math.max.apply(null,counts.map(function(c){return c.n;}).concat([1]));
+  counts.forEach(function(c){var col=document.createElement('div');col.className='hcol';var pct=c.n>0?Math.round(c.n/mx*80):3;col.innerHTML='<div class="hbw"><div class="hbar" style="width:100%;height:'+pct+'%;background:'+(c.n>0?'var(--or)':'var(--b2)')+'"></div></div><div class="hday">'+c.day+'</div>';el.appendChild(col);});
+}
+
+// ═══════════════════════════════════════════
+//  DEVELOPMENT PLAN — weakness-based training plan
+// ═══════════════════════════════════════════
+var SKILL_CATS=[{tc:'tor',label:'Palli kontroll',color:'#FF6B1A'},{tc:'ttl',label:'Jalgade töö',color:'#378ADD'},{tc:'tpu',label:'Vise',color:'#1D9E75'},{tc:'tgy',label:'Kaitse',color:'#7F77DD'}];
+
+function relevantSessions(){
+  // player role: always their own data
+  if(ROLE!=='coach'){
+    var pid=CUST_PID||ST.selPlayer;
+    return ST.sessions.filter(function(s){return s.pid===pid;});
+  }
+  // coach role: only ever show one player's data at a time — never silently aggregate
+  if(!ST.selPlayer) return [];
+  return ST.sessions.filter(function(s){return s.pid===ST.selPlayer;});
+}
+
+function populatePlanPlayerSel(){
+  var sel=qs('planPlayerSel');if(!sel)return;
+  var title=qs('devPlanTitle');
+  if(ROLE!=='coach'){
+    sel.style.display='none';
+    if(title)title.textContent='📋 Sinu treeningkava';
+    return;
+  }
+  if(!ST.players.length){sel.style.display='none';return;}
+  sel.style.display='';
+  var cur=ST.selPlayer||'';
+  sel.innerHTML='<option value="">— Vali mängija —</option>'+ST.players.map(function(p){return '<option value="'+p.id+'"'+(p.id===cur?' selected':'')+'>'+p.name+'</option>';}).join('');
+  if(title){
+    var p=ST.players.find(function(x){return x.id===cur;});
+    title.textContent=p?'📋 '+p.name+' treeningkava':'📋 Treeningkava';
+  }
+  sel.onchange=function(){
+    ST.selPlayer=sel.value||null;
+    lsSave();
+    populatePlanPlayerSel();
+    renderDevPlan();renderTrendChart();renderGoals();
+  };
+}
+
+function skillCounts(sessions){
+  var c={tor:0,ttl:0,tpu:0,tgy:0};
+  sessions.forEach(function(s){var d=allDrills().find(function(x){return x.name===s.drill;});if(d&&c.hasOwnProperty(d.tc))c[d.tc]++;});
+  return c;
+}
+
+function weakestSkill(sessions){
+  var c=skillCounts(sessions);
+  var sorted=SKILL_CATS.slice().sort(function(a,b){return c[a.tc]-c[b.tc];});
+  return sorted[0];
+}
+
+function renderDevPlan(){
+  var el=qs('devPlanContent');if(!el)return;
+  if(ROLE==='coach'&&!ST.selPlayer){
+    el.innerHTML='<div style="text-align:center;padding:24px 0;color:var(--di)"><div style="font-size:28px;margin-bottom:8px">👆</div><div style="font-size:13px">Vali mängija ülal rippmenüüst, et näha tema treeningkava.</div></div>';
+    return;
+  }
+  var sessions=relevantSessions();
+  if(!sessions.length){
+    el.innerHTML='<div style="text-align:center;padding:24px 0;color:var(--di)"><div style="font-size:28px;margin-bottom:8px">🎯</div><div style="font-size:13px">Alusta treenimist — kava koostatakse esimese kande järel.</div></div>';
+    return;
+  }
+  var pid=ROLE==='coach'?ST.selPlayer:(CUST_PID||ST.selPlayer);
+  var goal=pid?(ST.goals[pid]||{}):{};
+  var weak=goal.focus?SKILL_CATS.find(function(x){return x.tc===goal.focus;}):weakestSkill(sessions);
+  var counts=skillCounts(sessions);
+  var weakDrills=allDrills().filter(function(d){return d.tc===weak.tc;}).slice(0,3);
+  var totalSessions=sessions.length;
+  var weakPct=totalSessions?Math.round((counts[weak.tc]/totalSessions)*100):0;
+
+  var html='<div class="bwrap" style="border-left:3px solid '+weak.color+';margin-bottom:10px">';
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+  html+='<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.02em;color:'+weak.color+'">'+weak.label+'</div><div style="font-size:11px;color:var(--mu);margin-top:2px">'+(goal.focus?'Valitud fookus':'Sinu nõrgim oskus')+' · '+counts[weak.tc]+' treeningut ('+weakPct+'%)</div></div>';
+  html+='<span style="font-size:22px">'+(weakDrills[0]?weakDrills[0].icon:'🏀')+'</span>';
+  html+='</div></div>';
+
+  html+='<div style="font-size:12px;color:var(--mu);margin-bottom:8px">Soovitatud harjutused sel nädalal:</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:14px" id="planDrillGrid"></div>';
+
+  // 4-week mini-plan
+  html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--di);margin-bottom:8px">4-nädalane mini-kava</div>';
+  var weekPlans=[
+    {w:1,goal:'Alusta — 2× nädalas, keskmine intensiivsus',pct:25},
+    {w:2,goal:'Lisa kordusi — 3× nädalas',pct:50},
+    {w:3,goal:'Tõsta intensiivsust, jälgi AI tagasisidet',pct:75},
+    {w:4,goal:'Testi progressi — võrdle esimese nädalaga',pct:100},
+  ];
+  weekPlans.forEach(function(wp){
+    html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">';
+    html+='<div style="width:46px;font-size:11px;color:var(--mu);flex-shrink:0">Nädal '+wp.w+'</div>';
+    html+='<div style="flex:1;height:5px;background:var(--b2);border-radius:3px;overflow:hidden"><div style="width:'+wp.pct+'%;height:100%;background:'+weak.color+'"></div></div>';
+    html+='<div style="font-size:11px;color:var(--mu);flex:2">'+wp.goal+'</div>';
+    html+='</div>';
+  });
+
+  el.innerHTML=html;
+
+  var grid=qs('planDrillGrid');
+  if(grid){
+    if(!weakDrills.length){
+      grid.innerHTML='<div style="font-size:12px;color:var(--di);grid-column:1/-1">Pole veel harjutusi selles kategoorias — lisa treener vahekaardilt "Haldus".</div>';
+    } else {
+      weakDrills.forEach(function(d){
+        var card=document.createElement('div');
+        card.style.cssText='background:var(--c1);border-radius:10px;padding:13px;cursor:pointer;border:1px solid var(--b2);transition:all .15s;position:relative;overflow:hidden';
+        card.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:'+({tor:'var(--or)',tbl:'var(--bl)',ttl:'var(--tl)',tpu:'var(--pu)',tgy:'var(--mu)'}[d.tc]||'var(--mu)')+'"></div><div style="font-size:20px;margin-bottom:7px">'+d.icon+'</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.02em;margin-bottom:5px">'+d.name+'</div><div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap"><span class="dtag '+d.tc+'">'+d.tag+'</span><span style="font-size:10px;color:var(--di)">'+d.dur+'</span></div>';
+        card.addEventListener('mouseenter',function(){card.style.background='var(--c2)';card.style.transform='translateY(-2px)';});
+        card.addEventListener('mouseleave',function(){card.style.background='var(--c1)';card.style.transform='';});
+        card.addEventListener('click',function(){
+          switchView('home');
+          setTimeout(function(){
+            var idx=homeList().findIndex(function(x){return x.id===d.id;});
+            if(idx>=0)jumpTo(idx);
+          },50);
+        });
+        grid.appendChild(card);
+      });
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+//  HISTORICAL TREND CHART — progress over time
+// ═══════════════════════════════════════════
+function renderTrendChart(){
+  var svg=qs('trendSvg');if(!svg)return;
+  if(ROLE==='coach'&&!ST.selPlayer){
+    svg.innerHTML='<text x="200" y="70" text-anchor="middle" fill="var(--di)" font-size="12">Vali mängija, et näha tema arengut</text>';
+    qs('trendLegend').innerHTML='';qs('trendXLabels').innerHTML='';
+    return;
+  }
+  var sessions=relevantSessions();
+  if(!sessions.length){
+    svg.innerHTML='<text x="200" y="70" text-anchor="middle" fill="var(--di)" font-size="12">Pole veel andmeid graafiku jaoks</text>';
+    qs('trendLegend').innerHTML='';qs('trendXLabels').innerHTML='';
+    return;
+  }
+  // Build last 6 weeks of data, weekly buckets, per skill category
+  var now=new Date();
+  var weeks=[];
+  for(var w=5;w>=0;w--){
+    var end=new Date(now);end.setDate(end.getDate()-w*7);
+    var start=new Date(end);start.setDate(start.getDate()-6);
+    weeks.push({start:start,end:end,counts:{tor:0,ttl:0,tpu:0,tgy:0}});
+  }
+  sessions.forEach(function(s){
+    var sd=new Date(s.date);
+    var d=allDrills().find(function(x){return x.name===s.drill;});
+    if(!d)return;
+    weeks.forEach(function(wk){
+      if(sd>=wk.start&&sd<=wk.end&&wk.counts.hasOwnProperty(d.tc))wk.counts[d.tc]++;
+    });
+  });
+  var maxVal=1;
+  weeks.forEach(function(wk){SKILL_CATS.forEach(function(sc){maxVal=Math.max(maxVal,wk.counts[sc.tc]);});});
+
+  var W=400,H=140,padL=8,padR=8,padT=10,padB=10;
+  var plotW=W-padL-padR,plotH=H-padT-padB;
+  var stepX=plotW/(weeks.length-1||1);
+
+  function pathFor(tc){
+    return weeks.map(function(wk,i){
+      var x=padL+i*stepX;
+      var y=padT+plotH-(wk.counts[tc]/maxVal)*plotH;
+      return (i===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1);
+    }).join(' ');
+  }
+
+  var svgContent='';
+  // gridlines
+  for(var g=0;g<=2;g++){
+    var gy=padT+plotH*(g/2);
+    svgContent+='<line x1="'+padL+'" y1="'+gy.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+gy.toFixed(1)+'" stroke="var(--b2)" stroke-width="1"/>';
+  }
+  SKILL_CATS.forEach(function(sc){
+    svgContent+='<path d="'+pathFor(sc.tc)+'" fill="none" stroke="'+sc.color+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    weeks.forEach(function(wk,i){
+      var x=padL+i*stepX;
+      var y=padT+plotH-(wk.counts[sc.tc]/maxVal)*plotH;
+      svgContent+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="2.5" fill="'+sc.color+'"/>';
+    });
+  });
+  svg.innerHTML=svgContent;
+
+  qs('trendLegend').innerHTML=SKILL_CATS.map(function(sc){return '<span style="font-size:10px;color:var(--mu);display:inline-flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:'+sc.color+';display:inline-block"></span>'+sc.label+'</span>';}).join('');
+  qs('trendXLabels').innerHTML=weeks.map(function(wk,i){return '<span style="font-size:9px;color:var(--di)">'+(i===0?'6 näd. tagasi':i===weeks.length-1?'See nädal':'')+'</span>';}).join('');
+}
+
+// ═══════════════════════════════════════════
+//  GOALS — weekly/monthly targets + streak tracking
+// ═══════════════════════════════════════════
+function renderGoals(){
+  var el=qs('goalsContent');if(!el)return;
+  if(ROLE==='coach'&&!ST.selPlayer){
+    el.innerHTML='<div style="text-align:center;padding:24px 0;color:var(--di)"><div style="font-size:28px;margin-bottom:8px">👆</div><div style="font-size:13px">Vali mängija ülal, et seada ja näha tema eesmärke.</div></div>';
+    return;
+  }
+  var pid=ROLE==='coach'?ST.selPlayer:(CUST_PID||ST.selPlayer);
+  var goal=pid?(ST.goals[pid]||{weekly:4,hours:20}):{weekly:4,hours:20};
+  var sessions=relevantSessions();
+
+  var now=new Date();
+  var weekStart=new Date(now);weekStart.setDate(now.getDate()-now.getDay()+1);
+  var weekSessions=sessions.filter(function(s){return new Date(s.date)>=weekStart;});
+  var monthStart=new Date(now.getFullYear(),now.getMonth(),1);
+  var monthSessions=sessions.filter(function(s){return new Date(s.date)>=monthStart;});
+  var monthHours=Math.round(monthSessions.reduce(function(a,s){return a+(+s.dur||0);},0)/60*10)/10;
+
+  var dates=Array.from(new Set(sessions.map(function(s){return s.date;}))).sort();
+  var streak=0;
+  if(dates.length){
+    var d=new Date();var todayStr=d.toISOString().split('T')[0];
+    for(var i=dates.length-1;i>=0;i--){
+      var dStr=d.toISOString().split('T')[0];
+      if(dates[i]===dStr){streak++;d.setDate(d.getDate()-1);}
+      else if(dates[i]<dStr)break;
+    }
+  }
+
+  var weeklyPct=Math.min(100,Math.round((weekSessions.length/(goal.weekly||4))*100));
+  var hoursPct=Math.min(100,Math.round((monthHours/(goal.hours||20))*100));
+
+  var html='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-bottom:12px">';
+
+  html+='<div class="stat-card"><div class="stat-num" style="color:'+(streak>=3?'var(--orange)':'var(--text)')+'">'+streak+(streak>=3?' 🔥':'')+'</div><div class="stat-label">Päeva järjest</div></div>';
+  html+='<div class="stat-card"><div class="stat-num">'+weekSessions.length+'/'+(goal.weekly||4)+'</div><div class="stat-label">Sel nädalal</div></div>';
+  html+='<div class="stat-card"><div class="stat-num">'+monthHours+'/'+(goal.hours||20)+'h</div><div class="stat-label">Selle kuu eesmärk</div></div>';
+
+  html+='</div>';
+
+  html+='<div class="bar-wrap"><div class="progress-label"><span>Nädala eesmärk ('+(goal.weekly||4)+' treeningut)</span><span>'+weeklyPct+'%</span></div><div class="bar-track"><div class="bar-fill" style="width:'+weeklyPct+'%;background:'+(weeklyPct>=100?'#1D9E75':'#FF6B1A')+'"></div></div></div>';
+  html+='<div class="bar-wrap"><div class="progress-label"><span>Kuu tunnieesmärk ('+(goal.hours||20)+'h)</span><span>'+hoursPct+'%</span></div><div class="bar-track"><div class="bar-fill blue" style="width:'+hoursPct+'%"></div></div></div>';
+
+  if(weeklyPct>=100){
+    html+='<div class="warn-item ok" style="margin-top:10px"><i class="ti ti-circle-check" aria-hidden="true"></i>Nädala eesmärk täidetud! Suurepärane töö.</div>';
+  } else {
+    var remaining=(goal.weekly||4)-weekSessions.length;
+    html+='<div class="warn-item hint" style="margin-top:10px"><i class="ti ti-bulb" aria-hidden="true"></i>Veel '+remaining+' treening'+(remaining===1?'':'ut')+' selle nädala eesmärgi täitmiseks.</div>';
+  }
+
+  el.innerHTML=html;
+}
+
+function openGoalModal(){
+  var pid=ROLE==='coach'?ST.selPlayer:(CUST_PID||ST.selPlayer);
+  if(!pid){toast('Vali esmalt mängija','warn');return;}
+  var goal=ST.goals[pid]||{weekly:4,hours:20,focus:''};
+  qs('goalWeekly').value=goal.weekly||4;
+  qs('goalHours').value=goal.hours||20;
+  qs('goalFocus').value=goal.focus||'';
+  qs('goalModal').style.display='flex';
+}
+function closeGoalModal(){qs('goalModal').style.display='none';}
+function saveGoal(){
+  var pid=ROLE==='coach'?ST.selPlayer:(CUST_PID||ST.selPlayer);
+  if(!pid){toast('Vali esmalt mängija','err');return;}
+  ST.goals[pid]={weekly:Math.max(1,parseInt(qs('goalWeekly').value)||4),hours:Math.max(1,parseInt(qs('goalHours').value)||20),focus:qs('goalFocus').value};
+  lsSave();closeGoalModal();renderGoals();renderDevPlan();toast('Eesmärk salvestatud!','ok');
+}
+
+// ═══════════════════════════════════════════
+//  HOME — THREE-COL TRAINER
+// ═══════════════════════════════════════════
+var APP={cD:0,cS:1,tL:0,run:false,tI:null,aI:null,aIdx:0,sIdx:0,phase:'idle',list:null};
+
+function homeList(){
+  if(!APP.list) APP.list=activeDrills();
+  return APP.list;
+}
+
+function priorityOrderedDrills(){
+  var sessions=relevantSessions();
+  var weak=weakestSkill(sessions);
+  var all=activeDrills();
+  if(!weak) return all;
+  var priority=all.filter(function(d){return d.tc===weak.tc;});
+  var rest=all.filter(function(d){return d.tc!==weak.tc;});
+  return priority.concat(rest);
+}
+var drillFilter='kõik';
+var curHomeCard=null,curHomeDrill=null;
+
+function initHome(){
+  renderWeekGrid();updateProgress();
+  renderHomeDrillList();renderHomeDrillDetail(APP.cD);renderHomeAI(homeList()[APP.cD]);
+}
+
+function renderWeekGrid(){
+  var el=qs('weekGrid');if(!el)return;el.innerHTML='';
+  var gs=ST.globalSessions||[];var now=new Date();
+  var days=['E','T','K','N','R','L','P'];
+  var todayStr=now.toISOString().split('T')[0];
+  // Monday of this calendar week
+  var monOffset=now.getDay()===0?-6:1-now.getDay();
+  var monday=new Date(now);monday.setDate(now.getDate()+monOffset);
+  Array.from({length:7},function(_,i){
+    var d=new Date(monday);d.setDate(monday.getDate()+i);
+    var ds=d.toISOString().split('T')[0];
+    var done=gs.some(function(s){return s.date===ds;});
+    var isT=ds===todayStr;
+    var pill=document.createElement('div');pill.className='dpill'+(done?' done':'')+(isT?' today':'');
+    pill.innerHTML='<div class="dlbl">'+days[i]+'</div><div class="ddot">'+(done?'✓':'')+'</div>';
+    el.appendChild(pill);
+  });
+}
+
+function scheduleMidnightRefresh(){
+  var now=new Date();
+  var nextMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1,0,0,5); // 5s after midnight, safety margin
+  var msUntil=nextMidnight-now;
+  setTimeout(function(){
+    renderWeekGrid();
+    updateProgress();
+    scheduleMidnightRefresh(); // reschedule for the following midnight
+  },msUntil);
+}
+
+function renderHomeDrillList(){
+  var el=qs('hDrillList');if(!el)return;
+  var list=homeList();
+  el.innerHTML='';
+  list.forEach(function(d,i){
+    var item=document.createElement('div');
+    item.className='di'+(APP.phase!=='idle'&&i===APP.cD?' sel':'')+(APP.phase!=='idle'&&i<APP.cD?' fin':'');
+    item.innerHTML=(APP.phase!=='idle'&&i<APP.cD?'<span style="color:var(--tl);float:right;font-size:12px">✓</span>':'')+'<div class="diname">'+d.icon+' '+d.name+'</div><div class="dimeta">'+d.sets+' × '+d.setDur+'s'+(d.rest?' · paus '+d.rest+'s':'')+'</div><span class="dtag '+d.tc+'">'+d.tag+'</span>';
+    item.addEventListener('click',function(){jumpTo(i);});
+    el.appendChild(item);
+  });
+  qs('hDProg').textContent=APP.phase==='done'?'Kõik tehtud!':APP.cD+'/'+list.length+' tehtud';
+}
+
+function renderHomeDrillDetail(idx){
+  var el=qs('hCenterPane');if(!el)return;
+  var d=homeList()[idx];if(!d){el.innerHTML='';return;}
+  if(APP.phase==='idle'){
+    var sh='',eh='';
+    for(var i=0;i<(d.steps||[]).length;i++) sh+='<div class="srow"><span class="snum">'+(i+1)+'</span>'+d.steps[i]+'</div>';
+    for(var i=0;i<(d.errors||[]).length;i++) eh+='<div class="wrow werr">'+d.errors[i]+'</div>';
+    el.innerHTML='<div class="ptitle">'+d.name+'</div><div class="psub">'+d.desc+'</div><div class="pills"><span class="pill or">'+d.lv+'</span><span class="pill">'+d.sets+' × '+d.setDur+'s</span><span class="pill">'+d.dur+'</span></div><div class="div"></div><div class="stl">Sammud</div>'+sh+(eh?'<div style="margin-top:10px" class="div"></div><div class="stl">Levinud vead</div>'+eh:'');
+    return;
+  }
+  if(APP.phase==='done'){renderResult();return;}
+  var isR=APP.phase==='rest',tot=isR?d.rest:d.setDur;
+  var C=2*Math.PI*50,off=C*(1-(APP.tL/tot)),rc=isR?'#EF9F27':'var(--or)';
+  var sh='',dh='';
+  for(var i=0;i<(d.steps||[]).length;i++){var a=i===APP.sIdx,dn=i<APP.sIdx;sh+='<div class="srow'+(a?' arow':'')+'"><span class="snum'+(a?' a':dn?' d':'')+'">'+( a?'▶':dn?'✓':(i+1))+'</span>'+d.steps[i]+'</div>';}
+  for(var i=0;i<d.sets;i++) dh+='<div class="dot'+(i<APP.cS-1?' dd':i===APP.cS-1&&!isR?' da':'')+'"></div>';
+  el.innerHTML='<div class="phlab" style="color:'+(isR?'#EF9F27':'var(--or)')+'">'+( isR?'☕ Puhkepaus':'▶ Seeria '+APP.cS+' / '+d.sets)+'</div><div class="ptitle">'+d.name+'</div><div class="psub" style="margin-bottom:10px">'+d.desc+'</div>'
+    +'<div class="twrap" style="background:'+(isR?'rgba(239,159,39,.05)':'rgba(255,107,26,.05)')+'"><div class="tring"><svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="var(--b2)" stroke-width="5"/><circle id="arc" cx="60" cy="60" r="50" fill="none" stroke="'+rc+'" stroke-width="5" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" stroke-linecap="round"/></svg><div class="tnum"><div class="tbig" id="tbig">'+fmt(APP.tL)+'</div><div class="tsub">'+(isR?'Puhka':'Seeria '+APP.cS+'/'+d.sets)+'</div></div></div>'
+    +'<div class="tbtns"><button class="tbtn" id="bPrev">⏮</button><button class="tbtn main" id="bPlay">'+(APP.run?'⏸':'▶')+'</button><button class="tbtn" id="bNext">⏭</button></div>'
+    +'<div class="sdots">'+dh+'</div></div>'
+    +'<div class="stl" style="margin-top:11px">Aktiivsed sammud</div>'+sh;
+  qs('bPlay').addEventListener('click',toggleT);
+  qs('bPrev').addEventListener('click',prevS);
+  qs('bNext').addEventListener('click',nextS);
+}
+
+function updDisp(){
+  var b=qs('tbig'),a=qs('arc');if(!b||!a)return;
+  b.textContent=fmt(APP.tL);
+  var d=homeList()[APP.cD],tot=APP.phase==='rest'?d.rest:d.setDur,C=2*Math.PI*50;
+  a.setAttribute('stroke-dashoffset',(C*(1-(APP.tL/tot))).toFixed(1));
+}
+
+function renderHomeAI(d){
+  var feed=qs('hAIFeed');if(!feed||!d)return;
+  var arr=d.stats||[];
+  feed.innerHTML=arr.map(function(a){return '<div class="ac"><div class="acn">'+a.n+'</div><div class="acv">'+a.v+'</div><div class="act '+(a.tc||'tne')+'">'+(a.tr||'')+'</div><div class="acf">'+a.f+'</div></div>';}).join('');
+}
+
+function renderResult(){
+  var el=qs('hCenterPane');if(!el)return;
+  var totMin=Math.round(homeList().reduce(function(a,d){return a+d.sets*d.setDur+(d.sets>1?(d.sets-1)*d.rest:0);},0)/60);
+  el.innerHTML='<div class="fbanner"><div class="ficon">🏆</div><div><div class="ft">Treening lõpetatud!</div><div class="fs">'+homeList().length+' harjutust · salvestatud</div></div></div>'
+    +'<div class="resgrid"><div class="rescard"><div class="reslbl">Harjutused</div><div class="resval">'+homeList().length+'</div></div><div class="rescard"><div class="reslbl">Aeg</div><div class="resval">'+totMin+' min</div></div><div class="rescard"><div class="reslbl">Seeriad</div><div class="resval">'+homeList().reduce(function(a,d){return a+d.sets;},0)+'</div></div><div class="rescard"><div class="reslbl">AI skoor</div><div class="resval">91%</div></div></div>'
+    +'<div class="div"></div><div class="stl">AI soovitused</div><div class="wrow wok">Põrgatuse rütm on oluliselt paranenud!</div><div class="wrow whi">Defensive Slides: reaktsiooniaeg vajab treeningut</div><div class="wrow wok">Kehaasend kõigis harjutustes — 93%</div>';
+}
+
+// ── TIMER LOGIC ──
+function tick(){
+  if(APP.tL>0){APP.tL--;updDisp();if(APP.phase==='active'){var d=homeList()[APP.cD];var p=Math.floor((1-(APP.tL/d.setDur))*d.steps.length);APP.sIdx=Math.min(p,(d.steps||[]).length-1);}return;}
+  clearInterval(APP.tI);
+  var d=homeList()[APP.cD];
+  if(APP.phase==='active'){if(APP.cS<d.sets){APP.cS++;d.rest>0?startRest():startSet();}else nextDrill();}
+  else startSet();
+}
+function startSet(){
+  APP.phase='active';var d=homeList()[APP.cD];APP.tL=d.setDur;APP.sIdx=0;APP.run=true;
+  setPillH('active');renderHomeDrillDetail(APP.cD);renderHomeDrillList();startLiveAI();
+  clearInterval(APP.tI);APP.tI=setInterval(tick,1000);
+}
+function startRest(){
+  APP.phase='rest';var d=homeList()[APP.cD];APP.tL=d.rest;APP.run=true;
+  setPillH('rest');stopLiveAI();renderHomeDrillDetail(APP.cD);
+  clearInterval(APP.tI);APP.tI=setInterval(tick,1000);
+}
+function nextDrill(){
+  stopLiveAI();hideEl('hLiveBadge');
+  var d=homeList()[APP.cD];
+  ST.globalSessions.push({date:new Date().toISOString().split('T')[0],drillId:d.id,ts:Date.now()});
+  // also log a real session record for the active player, so XP/badges trigger from actual play
+  var activePid=ROLE==='coach'?ST.selPlayer:(CUST_PID||ST.selPlayer);
+  if(activePid){
+    var beforeBadges=calcBadges(activePid);
+    ST.sessions.push({id:Date.now().toString()+'_'+APP.cD,pid:activePid,drill:d.name,dur:Math.round((d.sets*d.setDur+(d.sets>1?(d.sets-1)*d.rest:0))/60)||1,date:new Date().toISOString().split('T')[0],int:'keskmine',notes:'',synced:false});
+    var afterBadges=calcBadges(activePid);
+    var newBadges=afterBadges.filter(function(b){return beforeBadges.indexOf(b)===-1;});
+    window._pendingBadgeQueue=(window._pendingBadgeQueue||[]).concat(newBadges);
+  }
+  lsSave();
+  if(APP.cD<homeList().length-1){APP.cD++;APP.cS=1;APP.sIdx=0;renderHomeDrillList();startSet();}
+  else{
+    APP.phase='done';APP.run=false;setPillH('done');renderHomeDrillList();renderHomeDrillDetail(APP.cD);renderHomeAI(homeList()[APP.cD]);qs('hAIHint').textContent='Valmis';updateProgress();renderWeekGrid();
+    playBadgeQueue();
+  }
+}
+function toggleT(){
+  if(APP.phase==='idle'||APP.phase==='done')return;
+  if(APP.run){clearInterval(APP.tI);APP.run=false;var b=qs('bPlay');if(b)b.textContent='▶';}
+  else{APP.run=true;var b=qs('bPlay');if(b)b.textContent='⏸';clearInterval(APP.tI);APP.tI=setInterval(tick,1000);}
+}
+function nextS(){clearInterval(APP.tI);APP.run=false;var d=homeList()[APP.cD];if(APP.phase==='active'&&APP.cS<d.sets){APP.cS++;d.rest>0?startRest():startSet();}else nextDrill();}
+function prevS(){clearInterval(APP.tI);APP.run=false;if(APP.cS>1){APP.cS--;startSet();}}
+function jumpTo(i){if(APP.phase==='idle'){APP.cD=i;renderHomeDrillList();renderHomeDrillDetail(i);renderHomeAI(homeList()[i]);return;}clearInterval(APP.tI);stopLiveAI();APP.cD=i;APP.cS=1;APP.sIdx=0;renderHomeDrillList();startSet();}
+
+var PILL_MAP={idle:['sp0','Ootel'],active:['sp1','Aktiivne'],rest:['sp2','Puhkepaus'],done:['sp3','Valmis']};
+function setPillH(s){var p=qs('pill');if(!p)return;var m=PILL_MAP[s];p.className='spill '+m[0];p.textContent=m[1];}
+
+function startLiveAI(){
+  APP.aIdx=0;showEl('hLiveBadge','flex');qs('hAIHint').textContent='Reaalajas';
+  var d=homeList()[APP.cD];if(d.live&&d.live.length)renderHomeAI({stats:d.live[0]});
+  clearInterval(APP.aI);
+  APP.aI=setInterval(function(){APP.aIdx=(APP.aIdx+1)%(d.live?d.live.length:1);if(d.live&&d.live[APP.aIdx])renderHomeAI({stats:d.live[APP.aIdx]});var m=['Analüüsin...','Mõõdan...','Kontrollin...','Arvutan...'];qs('hLiveTxt').textContent=m[APP.aIdx%m.length];},5000);
+}
+function stopLiveAI(){clearInterval(APP.aI);}
+
+function startWorkout(){
+  clearInterval(APP.tI);clearInterval(APP.aI);
+  APP.list=priorityOrderedDrills();
+  APP.cD=0;APP.cS=1;APP.sIdx=0;APP.aIdx=0;
+  var sb=qs('hStartBtn');sb.disabled=true;sb.textContent='Käib...';
+  showEl('hResetBtn','inline-flex');renderHomeDrillList();startSet();
+}
+function resetWorkout(){
+  clearInterval(APP.tI);clearInterval(APP.aI);
+  APP.phase='idle';APP.cD=0;APP.cS=1;APP.run=false;APP.sIdx=0;APP.aIdx=0;
+  APP.list=activeDrills();
+  setPillH('idle');var sb=qs('hStartBtn');sb.disabled=false;sb.textContent='▶ Alusta treeningut';
+  hideEl('hResetBtn');hideEl('hLiveBadge');qs('hAIHint').textContent='Reaalajas';
+  renderHomeDrillList();renderHomeDrillDetail(0);renderHomeAI(homeList()[0]);
+}
+
+// ═══════════════════════════════════════════
+//  ALL DRILLS VIEW
+// ═══════════════════════════════════════════
+function renderAllDrills(){
+  buildDrillCatTabs();
+  var el=qs('allDrills');if(!el)return;el.innerHTML='';
+  var list=activeDrills().filter(function(d){return drillFilter==='kõik'||d.tag===drillFilter||d.tc===drillFilter;});
+  if(!list.length){el.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--mu)"><div style="font-size:32px;margin-bottom:8px">🔍</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase">Pole harjutusi</div></div>';return;}
+  list.forEach(function(d){
+    var card=document.createElement('div');
+    card.style.cssText='background:var(--c1);border-radius:10px;padding:13px;cursor:pointer;border:1px solid var(--b2);transition:all .15s;position:relative;overflow:hidden';
+    card.innerHTML='<div style="position:absolute;top:0;left:0;right:0;height:3px;background:'+({tor:'var(--or)',tbl:'var(--bl)',ttl:'var(--tl)',tpu:'var(--pu)',tgy:'var(--mu)'}[d.tc]||'var(--mu)')+'"></div><div style="font-size:20px;margin-bottom:7px">'+d.icon+'</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.02em;margin-bottom:5px">'+d.name+'</div><div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap"><span class="dtag '+d.tc+'">'+d.tag+'</span><span style="font-size:10px;color:var(--di)">'+d.dur+'</span></div>';
+    card.addEventListener('mouseenter',function(){card.style.background='var(--c2)';card.style.transform='translateY(-2px)';});
+    card.addEventListener('mouseleave',function(){card.style.background='var(--c1)';card.style.transform='';});
+    card.addEventListener('click',function(){switchView('home');setTimeout(function(){jumpTo(homeList().indexOf(d));},50);});
+    el.appendChild(card);
+  });
+}
+
+function buildDrillCatTabs(){
+  var el=qs('drillCatTabs');if(!el)return;
+  var cats=['kõik','Palli kontroll','Rütm','Jalgade töö','Vise','Muu'];
+  el.innerHTML=cats.map(function(c){return '<button class="ctab'+(c===drillFilter?' on':'')+'" data-cat="'+c+'">'+( c==='kõik'?'Kõik':c)+'</button>';}).join('');
+  el.querySelectorAll('.ctab').forEach(function(b){b.addEventListener('click',function(){drillFilter=b.dataset.cat;el.querySelectorAll('.ctab').forEach(function(x){x.classList.remove('on');});b.classList.add('on');renderAllDrills();});});
+}
+
+// ═══════════════════════════════════════════
+//  SETTINGS
+// ═══════════════════════════════════════════
+function loadSettings(){
+  var inp=qs('gsUrl');if(inp)inp.value=ST.gsUrl||'';
+  var st=qs('gsStatus');if(st)st.textContent=ST.gsUrl?'URL salvestatud ✓':'Pole seadistatud';
+}
+
+// ═══════════════════════════════════════════
+//  BALL ANIMATION
+// ═══════════════════════════════════════════
+function animBall(){
+  var c=qs('ballCanvas');if(!c)return;
+  var ctx=c.getContext('2d');var y=24,vy=2,g=0.5,b=0.72;var fY=118,R=18;
+  function draw(){
+    ctx.clearRect(0,0,120,140);
+    var sq=vy>0&&y+R>fY-4?Math.max(0.77,1-Math.abs(vy)*0.06):1;
+    var rY=R*sq,rX=R/sq;
+    ctx.save();ctx.translate(60,y);ctx.scale(rX/R,rY/R);
+    var gr=ctx.createRadialGradient(-5,-5,2,0,0,R);
+    gr.addColorStop(0,'#FF8142');gr.addColorStop(0.6,'#FF6B1A');gr.addColorStop(1,'#C44A00');
+    ctx.beginPath();ctx.arc(0,0,R,0,Math.PI*2);ctx.fillStyle=gr;ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.35)';ctx.lineWidth=1.1;ctx.beginPath();ctx.arc(0,0,R,0,Math.PI*2);ctx.stroke();
+    ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-R,0);ctx.lineTo(R,0);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,-R);ctx.lineTo(0,R);ctx.stroke();
+    ctx.beginPath();ctx.arc(0,0,R,-0.7,0.7);ctx.stroke();
+    ctx.beginPath();ctx.arc(0,0,R,Math.PI-0.7,Math.PI+0.7);ctx.stroke();
+    ctx.restore();
+    var sh=Math.max(0.1,1-(y/fY)*0.8);
+    ctx.beginPath();ctx.ellipse(60,fY+3,R*0.85*sh,4*sh,0,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,107,26,'+(sh*0.3)+')';ctx.fill();
+    vy+=g;y+=vy;
+    if(y+rY>=fY){y=fY-rY;vy=-Math.abs(vy)*b;if(Math.abs(vy)<1.4)vy=-7.5;}
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+
+
+// ═══════════════════════════════════════════
+//  WIRE UP ALL BUTTONS
+// ═══════════════════════════════════════════
+try{
+qs('rCoach').addEventListener('click',function(){selectRole('coach');});
+qs('rPlayer').addEventListener('click',function(){openPlayerPicker();});
+qs('swBtn').addEventListener('click',switchRoleScreen);
+qs('ppBackBtn').addEventListener('click',closePlayerPicker);
+qs('ppCreateBtn').addEventListener('click',openPlayerCreate);
+qs('pcBackBtn').addEventListener('click',closePlayerCreate);
+qs('pcSaveBtn').addEventListener('click',createOwnPlayer);
+qs('hStartBtn').addEventListener('click',startWorkout);
+qs('hResetBtn').addEventListener('click',resetWorkout);
+qs('hAddBtn').addEventListener('click',function(){openExForm(null);});
+qs('dAddBtn').addEventListener('click',function(){openExForm(null);});
+qs('exAddBtn').addEventListener('click',function(){openExForm(null);});
+qs('pAddBtn').addEventListener('click',openAddPlayer);
+qs('apmClose').addEventListener('click',closeAddPlayer);
+qs('apCancel').addEventListener('click',closeAddPlayer);
+qs('apSave').addEventListener('click',savePlayer);
+qs('exmClose').addEventListener('click',closeExForm);
+qs('exCancel').addEventListener('click',closeExForm);
+qs('exSave').addEventListener('click',saveEx);
+qs('addStepBtn').addEventListener('click',function(){addStepInp();});
+qs('detailBack').addEventListener('click',closeDetail);
+qs('logSave').addEventListener('click',saveSession);
+qs('logSync').addEventListener('click',syncToSheets);
+qs('gsUrlSave').addEventListener('click',function(){ST.gsUrl=(qs('gsUrl').value||'').trim();lsSave();var s=qs('gsStatus');if(s)s.textContent=ST.gsUrl?'URL salvestatud ✓':'Pole seadistatud';toast('Seaded salvestatud','ok');});
+qs('gsTestBtn').addEventListener('click',testSheetsConnection);
+qs('gsSyncAllBtn').addEventListener('click',syncAllToSheets);
+qs('buCloseBtn').addEventListener('click',closeBadgeUnlock);
+qs('clearSessions').addEventListener('click',function(){if(!confirm('Kustutad kõik treeningkanded?'))return;ST.sessions=[];ST.globalSessions=[];lsSave();toast('Kanded kustutatud','ok');});
+qs('clearAll').addEventListener('click',function(){if(!confirm('Kustutad KÕIK andmed?'))return;localStorage.removeItem(LS);location.reload();});
+qs('goalEditBtn').addEventListener('click',openGoalModal);
+qs('goalmClose').addEventListener('click',closeGoalModal);
+qs('goalCancel').addEventListener('click',closeGoalModal);
+qs('goalSave').addEventListener('click',saveGoal);
+
+// close modals on bg click
+[qs('addPlayerModal'),qs('exModal'),qs('goalModal')].forEach(function(m){if(m)m.addEventListener('click',function(e){if(e.target===m)m.style.display='none';});});
+
+lsLoad();
+scheduleMidnightRefresh();
+}catch(err){console.error('Init error:',err);}
+</script>
+</body>
+</html>
