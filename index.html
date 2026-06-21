@@ -625,6 +625,7 @@ input,select,textarea{font-family:'Barlow',sans-serif;box-sizing:border-box}
     <button class="btn or" id="gsUrlSave">Salvesta URL</button>
     <button class="btn" id="gsTestBtn" style="margin-left:6px">Testi ühendust</button>
     <button class="btn tl" id="gsSyncAllBtn" style="margin-left:6px">↑ Sünkrooni kõik</button>
+    <button class="btn" id="gsPullBtn" style="margin-left:6px">↓ Lae uuendused</button>
     <div id="gsStatus" style="font-size:11px;color:var(--di);margin-top:8px"></div>
     <details style="margin-top:14px">
       <summary style="font-size:12px;color:var(--mu);cursor:pointer;margin-bottom:9px">Kuidas seadistada Apps Script? ▾</summary>
@@ -665,16 +666,17 @@ function doPost(e) {
       }
       if (!found) sh.appendRow([d.id, d.nimi, d.positsioon, d.vanus, new Date().toISOString()]);
     } else if (type === 'drill') {
-      const sh = getSheet('Harjutused', ['ID','Nimi','Kategooria','Tase','Kestus','Aktiivne','Uuendatud']);
+      const sh = getSheet('Harjutused', ['ID','Nimi','Ikoon','Kategooria','Tase','Kestus','Seeriad','SeeriaSek','Puhkus','Kirjeldus','Sammud','Aktiivne','Uuendatud']);
       const rows = sh.getDataRange().getValues();
+      const rowData = [d.id, d.nimi, d.ikoon||'🏀', d.kategooria, d.tase, d.kestus, d.seeriad||3, d.seeriaSek||30, d.puhkus||15, d.kirjeldus||'', JSON.stringify(d.sammud||[]), d.aktiivne, new Date().toISOString()];
       let found = false;
       for (let i = 1; i < rows.length; i++) {
         if (rows[i][0] === d.id) {
-          sh.getRange(i+1,1,1,7).setValues([[d.id,d.nimi,d.kategooria,d.tase,d.kestus,d.aktiivne,new Date().toISOString()]]);
+          sh.getRange(i+1,1,1,rowData.length).setValues([rowData]);
           found = true; break;
         }
       }
-      if (!found) sh.appendRow([d.id, d.nimi, d.kategooria, d.tase, d.kestus, d.aktiivne, new Date().toISOString()]);
+      if (!found) sh.appendRow(rowData);
     }
 
     return ContentService.createTextOutput(JSON.stringify({ok:true}))
@@ -685,9 +687,33 @@ function doPost(e) {
   }
 }
 
+function sheetToObjects(sh) {
+  const rows = sh.getDataRange().getValues();
+  if (rows.length < 2) return [];
+  const headers = rows[0];
+  return rows.slice(1).map(r => {
+    const o = {};
+    headers.forEach((h, i) => o[h] = r[i]);
+    return o;
+  });
+}
+
 function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({ok:true, msg:'Court IQ Apps Script is live'}))
-    .setMimeType(ContentService.MimeType.JSON);
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const out = {ok: true};
+    const kanded = ss.getSheetByName('Kanded');
+    const mangijad = ss.getSheetByName('Mängijad');
+    const harjutused = ss.getSheetByName('Harjutused');
+    out.kanded = kanded ? sheetToObjects(kanded) : [];
+    out.mangijad = mangijad ? sheetToObjects(mangijad) : [];
+    out.harjutused = harjutused ? sheetToObjects(harjutused) : [];
+    return ContentService.createTextOutput(JSON.stringify(out))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ok:false, error:String(err)}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }</pre>
       </div>
     </details>
@@ -1156,7 +1182,7 @@ async function syncDrillsToSheets(){
   for(var i=0;i<drills.length;i++){
     var d=drills[i];
     try{
-      await gsPost(url,{type:'drill',id:d.id,nimi:d.name,kategooria:d.tag,tase:d.lv,kestus:d.dur,aktiivne:d.active!==false});
+      await gsPost(url,{type:'drill',id:d.id,nimi:d.name,ikoon:d.icon||'🏀',kategooria:d.tag,tase:d.lv,kestus:d.dur,seeriad:d.sets,seeriaSek:d.setDur,puhkus:d.rest,kirjeldus:d.desc||'',sammud:d.steps||[],aktiivne:d.active!==false});
       ok++;
     }catch(e){fail++;}
   }
@@ -1174,15 +1200,75 @@ async function syncToSheets(){
   toast(sRes.ok+'/'+sRes.total+' kannet saadetud'+(sRes.fail?' ('+sRes.fail+' ebaõnnestus)':''),sRes.fail?'err':'ok');
 }
 
+async function gsGet(url){
+  var resp=await fetch(url,{method:'GET'});
+  var text=await resp.text();
+  var data;
+  try{data=JSON.parse(text);}catch(e){throw new Error('Vastus polnud JSON: '+text.slice(0,120));}
+  if(!data.ok) throw new Error(data.error||'Tundmatu viga skriptis');
+  return data;
+}
+
+async function pullFromSheets(silent){
+  var url=ST.gsUrl;if(!url){if(!silent){toast('Lisa Apps Script URL seadetes','warn');switchView('settings');}return{players:0,drills:0};}
+  var data;
+  try{data=await gsGet(url);}
+  catch(e){if(!silent)toast('Lugemine ebaõnnestus: '+e.message,'err');return{players:0,drills:0};}
+
+  var addedPlayers=0,addedDrills=0;
+
+  // merge players: add any from the sheet that don't exist locally (matched by ID)
+  (data.mangijad||[]).forEach(function(row){
+    var id=String(row['ID']||'');if(!id)return;
+    var exists=ST.players.find(function(p){return p.id===id;});
+    if(!exists){
+      ST.players.push({id:id,name:row['Nimi']||'Tundmatu',pos:row['Positsioon']||'Mängujuht',age:row['Vanus']||'',color:COLORS[ST.players.length%COLORS.length]});
+      addedPlayers++;
+    } else {
+      // sheet is newer source of truth for name/position/age if changed there
+      exists.name=row['Nimi']||exists.name;exists.pos=row['Positsioon']||exists.pos;exists.age=row['Vanus']||exists.age;
+    }
+  });
+
+  // merge drills: add any custom drills from the sheet not already known locally (matched by ID)
+  (data.harjutused||[]).forEach(function(row){
+    var id=String(row['ID']||'');if(!id)return;
+    var isBuiltin=BUILTIN.some(function(b){return b.id===id;});
+    if(isBuiltin)return; // never overwrite builtins from the sheet
+    if(!ST.customDrills)ST.customDrills=[];
+    var existing=ST.customDrills.find(function(d){return d.id===id;});
+    var steps=[];try{steps=JSON.parse(row['Sammud']||'[]');}catch(e){}
+    var tcMap={'Palli kontroll':'tor','Rütm':'tbl','Jalgade töö':'ttl','Vise':'tpu','Muu':'tgy'};
+    var obj={id:id,name:row['Nimi']||'Harjutus',icon:row['Ikoon']||'🏀',tag:row['Kategooria']||'Muu',tc:tcMap[row['Kategooria']]||'tgy',lv:row['Tase']||'Algaja',dur:row['Kestus']||'10 min',sets:Number(row['Seeriad'])||3,setDur:Number(row['SeeriaSek'])||30,rest:Number(row['Puhkus'])||15,desc:row['Kirjeldus']||'',steps:steps,active:row['Aktiivne']!==false&&row['Aktiivne']!=='FALSE',builtin:false,errors:['Hoia õige asend'],stats:[{n:'Sooritus',v:'—',tc:'tne',f:'AI'},{n:'Asend',v:'—',tc:'tne',f:'Keha'},{n:'Rütm',v:'—',tc:'tne',f:'Tempo'},{n:'Kordused',v:'—',tc:'tne',f:'AI'}],live:[[{n:'Sooritus',v:'Alustad',tr:'AI kalibreerub',tc:'tne',f:''},{n:'Asend',v:'—',tr:'',tc:'tne',f:''},{n:'Rütm',v:'—',tr:'',tc:'tne',f:''},{n:'Kordused',v:'—',tr:'',tc:'tne',f:''}]]};
+    if(existing){var idx=ST.customDrills.indexOf(existing);ST.customDrills[idx]=obj;}
+    else{ST.customDrills.push(obj);addedDrills++;}
+  });
+
+  lsSave();
+  return{players:addedPlayers,drills:addedDrills};
+}
+
 async function syncAllToSheets(){
   var url=ST.gsUrl;if(!url){toast('Lisa Apps Script URL seadetes','warn');return;}
   var btn=qs('gsSyncAllBtn');if(btn){btn.disabled=true;btn.textContent='Sünkroonin...';}
   var pRes=await syncPlayersToSheets();
   var dRes=await syncDrillsToSheets();
   var sRes=await syncSessionsToSheets(true);
+  var pullRes=await pullFromSheets(true);
   if(btn){btn.disabled=false;btn.textContent='↑ Sünkrooni kõik';}
+  refreshAllViewsAfterSync();
   var failTotal=pRes.fail+dRes.fail+sRes.fail;
-  toast('Mängijad '+pRes.ok+'/'+pRes.total+' · Harjutused '+dRes.ok+'/'+dRes.total+' · Kanded '+sRes.ok+'/'+sRes.total+(failTotal?' — kontrolli URL-i':''),failTotal?'err':'ok');
+  var pullMsg=(pullRes.players||pullRes.drills)?(' · Loetud: +'+pullRes.players+' mängijat, +'+pullRes.drills+' harjutust'):'';
+  toast('Mängijad '+pRes.ok+'/'+pRes.total+' · Harjutused '+dRes.ok+'/'+dRes.total+' · Kanded '+sRes.ok+'/'+sRes.total+pullMsg+(failTotal?' — kontrolli URL-i':''),failTotal?'err':'ok');
+}
+
+function refreshAllViewsAfterSync(){
+  // re-render whatever is currently visible so pulled-in data shows up immediately
+  if(qs('view-players')&&qs('view-players').classList.contains('on')){renderPlayers();}
+  if(qs('view-drills')&&qs('view-drills').classList.contains('on')){renderAllDrills();}
+  if(qs('view-exercises')&&qs('view-exercises').classList.contains('on')){renderExManage();}
+  if(qs('view-leaderboard')&&qs('view-leaderboard').classList.contains('on')){renderLeaderboard();}
+  if(qs('view-home')&&qs('view-home').classList.contains('on')){renderHomeDrillList();updateProgress();}
 }
 
 // ═══════════════════════════════════════════
@@ -1967,6 +2053,14 @@ qs('logSync').addEventListener('click',syncToSheets);
 qs('gsUrlSave').addEventListener('click',function(){ST.gsUrl=(qs('gsUrl').value||'').trim();lsSave();var s=qs('gsStatus');if(s)s.textContent=ST.gsUrl?'URL salvestatud ✓':'Pole seadistatud';toast('Seaded salvestatud','ok');});
 qs('gsTestBtn').addEventListener('click',testSheetsConnection);
 qs('gsSyncAllBtn').addEventListener('click',syncAllToSheets);
+qs('gsPullBtn').addEventListener('click',async function(){
+  var btn=qs('gsPullBtn');btn.disabled=true;btn.textContent='Laen...';
+  var res=await pullFromSheets();
+  btn.disabled=false;btn.textContent='↓ Lae uuendused';
+  refreshAllViewsAfterSync();
+  if(res.players||res.drills) toast('Loetud: +'+res.players+' mängijat, +'+res.drills+' harjutust','ok');
+  else toast('Uusi andmeid ei leitud','ok');
+});
 qs('buCloseBtn').addEventListener('click',closeBadgeUnlock);
 qs('clearSessions').addEventListener('click',function(){if(!confirm('Kustutad kõik treeningkanded?'))return;ST.sessions=[];ST.globalSessions=[];lsSave();toast('Kanded kustutatud','ok');});
 qs('clearAll').addEventListener('click',function(){if(!confirm('Kustutad KÕIK andmed?'))return;localStorage.removeItem(LS);location.reload();});
@@ -1980,6 +2074,7 @@ qs('goalSave').addEventListener('click',saveGoal);
 
 lsLoad();
 scheduleMidnightRefresh();
+if(ST.gsUrl){pullFromSheets(true).then(function(){refreshAllViewsAfterSync();});}
 }catch(err){console.error('Init error:',err);}
 </script>
 </body>
