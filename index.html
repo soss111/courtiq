@@ -970,7 +970,7 @@ function createOwnPlayer(){
   var name=(qs('pcName').value||'').trim();
   if(!name){qs('pcName').focus();return;}
   var newP={id:Date.now().toString(),name:name,pos:qs('pcPos').value,age:qs('pcAge').value,color:pcSelColor};
-  ST.players.push(newP);lsSave();
+  ST.players.push(newP);markDirtyAndSync();
   CUST_PID=newP.id;setMyStoredPid(newP.id);
   toast('Tere tulemast, '+name+'!','ok');
   selectRole('player');
@@ -1082,7 +1082,7 @@ function delPlayer(id){
   if(!confirm('Kustutad mängija ja kõik kanded?'))return;
   ST.players=ST.players.filter(function(p){return p.id!==id;});
   ST.sessions=ST.sessions.filter(function(s){return s.pid!==id;});
-  lsSave();renderPlayers();toast('Mängija kustutatud','err');
+  markDirtyAndSync();renderPlayers();toast('Mängija kustutatud','err');
 }
 
 // ═══════════════════════════════════════════
@@ -1099,7 +1099,7 @@ function closeAddPlayer(){hideEl('addPlayerModal');}
 function savePlayer(){
   var name=(qs('apName').value||'').trim();if(!name){qs('apName').focus();return;}
   ST.players.push({id:Date.now().toString(),name:name,pos:qs('apPos').value,age:qs('apAge').value,color:selColor});
-  lsSave();closeAddPlayer();renderPlayers();toast(name+' lisatud!','ok');
+  markDirtyAndSync();closeAddPlayer();renderPlayers();toast(name+' lisatud!','ok');
   qs('apName').value='';qs('apAge').value='';
 }
 
@@ -1112,12 +1112,57 @@ function saveSession(){
   if(!dur||!date){toast('Täida kestus ja kuupäev','err');return;}
   var beforeBadges=calcBadges(pid);
   var rec={id:Date.now().toString(),pid:pid,drill:qs('logDrill').value,dur:+dur,date:date,int:qs('logInt').value,notes:(qs('logNotes').value||'').trim(),synced:false};
-  ST.sessions.push(rec);lsSave();
+  ST.sessions.push(rec);markDirtyAndSync();
   var afterBadges=calcBadges(pid);
   var newBadges=afterBadges.filter(function(b){return beforeBadges.indexOf(b)===-1;});
   openPDetail(pid);updateProgress();toast('Kanne salvestatud!','ok');
   qs('logDur').value='';qs('logNotes').value='';
   if(newBadges.length){window._pendingBadgeQueue=(window._pendingBadgeQueue||[]).concat(newBadges);playBadgeQueue();}
+}
+
+// ═══════════════════════════════════════════
+//  AUTO-SYNC — triggered automatically on every real data change.
+//  Debounced so rapid changes (e.g. typing) don't fire a sync per keystroke.
+// ═══════════════════════════════════════════
+var _autoSyncTimer=null;
+var _autoSyncInFlight=false;
+
+function setSyncIndicator(state){
+  // state: 'idle' | 'syncing' | 'ok' | 'err'
+  var dot=qs('syncDot');if(!dot)return;
+  dot.className='sync-dot sync-'+state;
+  var lbl=qs('syncLbl');
+  if(lbl){
+    if(state==='syncing')lbl.textContent='Sünkroonin...';
+    else if(state==='ok')lbl.textContent='Sünkroonitud';
+    else if(state==='err')lbl.textContent='Sync ebaõnnestus';
+    else lbl.textContent='';
+  }
+}
+
+function markDirtyAndSync(){
+  lsSave();
+  if(!ST.gsUrl)return; // nothing to sync to
+  clearTimeout(_autoSyncTimer);
+  _autoSyncTimer=setTimeout(runAutoSync,900); // debounce: wait for a short pause in activity
+}
+
+async function runAutoSync(){
+  if(!ST.gsUrl)return;
+  if(_autoSyncInFlight){clearTimeout(_autoSyncTimer);_autoSyncTimer=setTimeout(runAutoSync,900);return;} // retry after current finishes
+  _autoSyncInFlight=true;
+  setSyncIndicator('syncing');
+  try{
+    await syncPlayersToSheets();
+    await syncDrillsToSheets();
+    await syncSessionsToSheets(true);
+    await pullFromSheets(true);
+    refreshAllViewsAfterSync();
+    setSyncIndicator('ok');
+  }catch(e){
+    setSyncIndicator('err');
+  }
+  _autoSyncInFlight=false;
 }
 
 async function gsPost(url,payload){
@@ -1301,10 +1346,10 @@ function saveEx(){
   if(!ST.customDrills)ST.customDrills=[];
   if(editExId){var idx=ST.customDrills.findIndex(function(x){return x.id===editExId;});if(idx>=0)ST.customDrills[idx]=ex;else ST.customDrills.push(ex);}
   else ST.customDrills.push(ex);
-  lsSave();closeExForm();renderExManage();renderAllDrills();initHome();toast(name+' salvestatud!','ok');
+  markDirtyAndSync();closeExForm();renderExManage();renderAllDrills();initHome();toast(name+' salvestatud!','ok');
 }
-function toggleEx(id){var ex=(ST.customDrills||[]).find(function(x){return x.id===id;});if(ex){ex.active=!ex.active;lsSave();renderExManage();renderAllDrills();toast(ex.active?'Aktiveeritud':'Peidetud','ok');}}
-function delEx(id){if(!confirm('Kustutad harjutuse?'))return;ST.customDrills=(ST.customDrills||[]).filter(function(x){return x.id!==id;});lsSave();renderExManage();renderAllDrills();toast('Kustutatud','err');}
+function toggleEx(id){var ex=(ST.customDrills||[]).find(function(x){return x.id===id;});if(ex){ex.active=!ex.active;markDirtyAndSync();renderExManage();renderAllDrills();toast(ex.active?'Aktiveeritud':'Peidetud','ok');}}
+function delEx(id){if(!confirm('Kustutad harjutuse?'))return;ST.customDrills=(ST.customDrills||[]).filter(function(x){return x.id!==id;});markDirtyAndSync();renderExManage();renderAllDrills();toast('Kustutatud','err');}
 
 function renderExManage(){
   var el=qs('exManageList');if(!el)return;
@@ -1360,7 +1405,7 @@ function renderAvail(){
 
 function setAvail(date,pid,st){
   if(!ST.avail)ST.avail={};if(!ST.avail[date])ST.avail[date]={};
-  ST.avail[date][pid]=st;lsSave();toast('Saadavus salvestatud','ok');
+  ST.avail[date][pid]=st;markDirtyAndSync();toast('Saadavus salvestatud','ok');
 }
 
 // ═══════════════════════════════════════════
@@ -1762,7 +1807,7 @@ function saveGoal(){
   var pid=ROLE==='coach'?ST.selPlayer:(CUST_PID||ST.selPlayer);
   if(!pid){toast('Vali esmalt mängija','err');return;}
   ST.goals[pid]={weekly:Math.max(1,parseInt(qs('goalWeekly').value)||4),hours:Math.max(1,parseInt(qs('goalHours').value)||20),focus:qs('goalFocus').value};
-  lsSave();closeGoalModal();renderGoals();renderDevPlan();toast('Eesmärk salvestatud!','ok');
+  markDirtyAndSync();closeGoalModal();renderGoals();renderDevPlan();toast('Eesmärk salvestatud!','ok');
 }
 
 // ═══════════════════════════════════════════
@@ -1914,7 +1959,7 @@ function nextDrill(){
     var newBadges=afterBadges.filter(function(b){return beforeBadges.indexOf(b)===-1;});
     window._pendingBadgeQueue=(window._pendingBadgeQueue||[]).concat(newBadges);
   }
-  lsSave();
+  markDirtyAndSync();
   if(APP.cD<homeList().length-1){APP.cD++;APP.cS=1;APP.sIdx=0;renderHomeDrillList();startSet();}
   else{
     APP.phase='done';APP.run=false;setPillH('done');renderHomeDrillList();renderHomeDrillDetail(APP.cD);renderHomeAI(homeList()[APP.cD]);qs('hAIHint').textContent='Valmis';updateProgress();renderWeekGrid();
@@ -2062,7 +2107,7 @@ qs('gsPullBtn').addEventListener('click',async function(){
   else toast('Uusi andmeid ei leitud','ok');
 });
 qs('buCloseBtn').addEventListener('click',closeBadgeUnlock);
-qs('clearSessions').addEventListener('click',function(){if(!confirm('Kustutad kõik treeningkanded?'))return;ST.sessions=[];ST.globalSessions=[];lsSave();toast('Kanded kustutatud','ok');});
+qs('clearSessions').addEventListener('click',function(){if(!confirm('Kustutad kõik treeningkanded?'))return;ST.sessions=[];ST.globalSessions=[];markDirtyAndSync();toast('Kanded kustutatud','ok');});
 qs('clearAll').addEventListener('click',function(){if(!confirm('Kustutad KÕIK andmed?'))return;localStorage.removeItem(LS);location.reload();});
 qs('goalEditBtn').addEventListener('click',openGoalModal);
 qs('goalmClose').addEventListener('click',closeGoalModal);
