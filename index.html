@@ -25,6 +25,13 @@ input,select,textarea{font-family:'Barlow',sans-serif;box-sizing:border-box}
 .logo span{color:var(--or)}
 .nav-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .rbadge{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:20px;background:var(--ord);color:var(--or)}
+.sync-indicator{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--di)}
+.sync-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sync-dot.sync-idle{background:var(--b2)}
+.sync-dot.sync-syncing{background:var(--bl);animation:syncPulse 1s ease-in-out infinite}
+.sync-dot.sync-ok{background:var(--tl)}
+.sync-dot.sync-err{background:var(--rd)}
+@keyframes syncPulse{0%,100%{opacity:1}50%{opacity:.35}}
 .rbadge.cust{background:rgba(55,138,221,0.15);color:var(--bl)}
 .ntabs{display:flex;gap:3px;background:var(--c1);border-radius:8px;padding:3px;flex-wrap:wrap}
 .tab{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:.07em;text-transform:uppercase;padding:6px 11px;border-radius:6px;border:none;background:transparent;color:var(--mu);transition:all .15s}
@@ -438,6 +445,7 @@ input,select,textarea{font-family:'Barlow',sans-serif;box-sizing:border-box}
   <div class="nav-r">
     <div class="rbadge" id="roleBadge">Treener</div>
     <span class="spill sp0" id="pill">Ootel</span>
+    <span class="sync-indicator" id="syncIndicator" style="display:none"><span class="sync-dot sync-idle" id="syncDot"></span><span id="syncLbl"></span></span>
     <div class="ntabs" id="navTabs"></div>
     <button class="swbtn" id="swBtn">Vaheta rolli</button>
   </div>
@@ -677,6 +685,20 @@ function doPost(e) {
         }
       }
       if (!found) sh.appendRow(rowData);
+    } else if (type === 'delete') {
+      const sheetName = d.kind === 'player' ? 'Mängijad' : d.kind === 'drill' ? 'Harjutused' : null;
+      if (sheetName) {
+        const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+        if (sh) {
+          const rows = sh.getDataRange().getValues();
+          for (let i = rows.length - 1; i >= 1; i--) {
+            if (rows[i][0] === d.id) {
+              sh.deleteRow(i + 1);
+              break;
+            }
+          }
+        }
+      }
     }
 
     return ContentService.createTextOutput(JSON.stringify({ok:true}))
@@ -810,6 +832,21 @@ function doGet(e) {
   </div>
 </div>
 
+<div class="modal-bg" id="hcModal" style="display:none">
+  <div class="modal">
+    <div class="mhdr"><span class="mtitle">Peatreeneri õigus</span><button class="mcls" id="hcmClose">✕</button></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <p style="font-size:12px;color:var(--mu);line-height:1.5;margin:0">Kustutamine on lubatud ainult peatreenerile. Sisesta parool jätkamiseks.</p>
+      <div class="fg"><label>Parool</label><input type="password" id="hcPassword" placeholder="••••••••"></div>
+      <div id="hcError" style="font-size:11px;color:var(--rd);display:none">Vale parool, proovi uuesti.</div>
+      <div style="display:flex;gap:7px;margin-top:4px">
+        <button class="btn or" id="hcSubmit">Kinnita</button>
+        <button class="btn" id="hcCancel">Tühista</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><div class="tdot" id="toastDot"></div><span id="toastMsg"></span></div>
 
 <div id="badgeUnlockOverlay">
@@ -827,7 +864,7 @@ function doGet(e) {
 // ═══════════════════════════════════════════
 //  GOOGLE SHEETS CONFIG — lisa oma URL siia
 // ═══════════════════════════════════════════
-var SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwrA8zWKW-aFu3F24J47JnKm5pB5XenBr-aIQHR6Gjboxx14ayZfken9iEiZpDuJnOK3A/exec';
+var SHEETS_URL = 'https://script.google.com/macros/s/AKfycbw-a7ja37x0CO5apgrMZ_CNcfBki1S2sp9n9vvR_c95UpajJlJlPb-4qcutdetLmz35iA/exec';
 
 // ═══════════════════════════════════════════
 //  BUILTIN DRILLS
@@ -912,6 +949,8 @@ function toast(msg,type){
 // ═══════════════════════════════════════════
 var ROLE='coach',CUST_PID=null;
 var MY_PID_KEY='ciq_my_pid';
+var HEAD_COACH_PASSWORD='peatreener2026'; // change this to your own password
+var isHeadCoach=false; // unlocked for the current session only, resets on reload
 var COACH_TABS=[{id:'home',l:'Avaleht'},{id:'drills',l:'Harjutused'},{id:'players',l:'Mängijad'},{id:'exercises',l:'Haldus'},{id:'leaderboard',l:'Edetabel'},{id:'availability',l:'Saadavus'},{id:'settings',l:'Seaded'}];
 var PLAYER_TABS=[{id:'home',l:'Avaleht'},{id:'drills',l:'Harjutused'},{id:'availability',l:'Saadavus'},{id:'leaderboard',l:'Areng'}];
 
@@ -1079,10 +1118,14 @@ function closeDetail(){
 }
 
 function delPlayer(id){
-  if(!confirm('Kustutad mängija ja kõik kanded?'))return;
-  ST.players=ST.players.filter(function(p){return p.id!==id;});
-  ST.sessions=ST.sessions.filter(function(s){return s.pid!==id;});
-  markDirtyAndSync();renderPlayers();toast('Mängija kustutatud','err');
+  requireHeadCoach(async function(){
+    if(!confirm('Kustutad mängija ja kõik kanded?'))return;
+    ST.players=ST.players.filter(function(p){return p.id!==id;});
+    ST.sessions=ST.sessions.filter(function(s){return s.pid!==id;});
+    lsSave();renderPlayers();toast('Mängija kustutatud','err');
+    await gsDeleteRemote('player',id);
+    markDirtyAndSync();
+  });
 }
 
 // ═══════════════════════════════════════════
@@ -1127,10 +1170,44 @@ function saveSession(){
 var _autoSyncTimer=null;
 var _autoSyncInFlight=false;
 
+// ═══════════════════════════════════════════
+//  HEAD COACH PASSWORD GATE — guards deletion actions
+// ═══════════════════════════════════════════
+var _hcPendingAction=null;
+
+function requireHeadCoach(action){
+  if(isHeadCoach){action();return;}
+  _hcPendingAction=action;
+  qs('hcPassword').value='';
+  qs('hcError').style.display='none';
+  qs('hcModal').style.display='flex';
+  setTimeout(function(){qs('hcPassword').focus();},50);
+}
+
+function closeHeadCoachModal(){
+  qs('hcModal').style.display='none';
+  _hcPendingAction=null;
+}
+
+function submitHeadCoachPassword(){
+  var entered=qs('hcPassword').value;
+  if(entered===HEAD_COACH_PASSWORD){
+    isHeadCoach=true;
+    qs('hcModal').style.display='none';
+    var action=_hcPendingAction;_hcPendingAction=null;
+    if(action)action();
+  } else {
+    qs('hcError').style.display='block';
+    qs('hcPassword').value='';
+    qs('hcPassword').focus();
+  }
+}
+
 function setSyncIndicator(state){
   // state: 'idle' | 'syncing' | 'ok' | 'err'
   var dot=qs('syncDot');if(!dot)return;
   dot.className='sync-dot sync-'+state;
+  var wrap=qs('syncIndicator');if(wrap)wrap.style.display='inline-flex';
   var lbl=qs('syncLbl');
   if(lbl){
     if(state==='syncing')lbl.textContent='Sünkroonin...';
@@ -1174,6 +1251,13 @@ async function gsPost(url,payload){
   try{data=JSON.parse(text);}catch(e){throw new Error('Vastus polnud JSON (kas URL on õige ja juurdepääs "Kõigile"?): '+text.slice(0,120));}
   if(!data.ok) throw new Error(data.error||'Tundmatu viga skriptis');
   return data;
+}
+
+async function gsDeleteRemote(kind,id){
+  // removes a row from the sheet (player or drill) so it doesn't reappear on the next pull.
+  // silently no-ops if sync isn't configured — local delete still proceeds either way.
+  if(!ST.gsUrl)return;
+  try{await gsPost(ST.gsUrl,{type:'delete',kind:kind,id:id});}catch(e){/* sheet not reachable; local delete still wins for this device */}
 }
 
 async function testSheetsConnection(){
@@ -1349,7 +1433,15 @@ function saveEx(){
   markDirtyAndSync();closeExForm();renderExManage();renderAllDrills();initHome();toast(name+' salvestatud!','ok');
 }
 function toggleEx(id){var ex=(ST.customDrills||[]).find(function(x){return x.id===id;});if(ex){ex.active=!ex.active;markDirtyAndSync();renderExManage();renderAllDrills();toast(ex.active?'Aktiveeritud':'Peidetud','ok');}}
-function delEx(id){if(!confirm('Kustutad harjutuse?'))return;ST.customDrills=(ST.customDrills||[]).filter(function(x){return x.id!==id;});markDirtyAndSync();renderExManage();renderAllDrills();toast('Kustutatud','err');}
+function delEx(id){
+  requireHeadCoach(async function(){
+    if(!confirm('Kustutad harjutuse?'))return;
+    ST.customDrills=(ST.customDrills||[]).filter(function(x){return x.id!==id;});
+    lsSave();renderExManage();renderAllDrills();toast('Kustutatud','err');
+    await gsDeleteRemote('drill',id);
+    markDirtyAndSync();
+  });
+}
 
 function renderExManage(){
   var el=qs('exManageList');if(!el)return;
@@ -2107,15 +2199,30 @@ qs('gsPullBtn').addEventListener('click',async function(){
   else toast('Uusi andmeid ei leitud','ok');
 });
 qs('buCloseBtn').addEventListener('click',closeBadgeUnlock);
-qs('clearSessions').addEventListener('click',function(){if(!confirm('Kustutad kõik treeningkanded?'))return;ST.sessions=[];ST.globalSessions=[];markDirtyAndSync();toast('Kanded kustutatud','ok');});
-qs('clearAll').addEventListener('click',function(){if(!confirm('Kustutad KÕIK andmed?'))return;localStorage.removeItem(LS);location.reload();});
+qs('clearSessions').addEventListener('click',function(){
+  requireHeadCoach(function(){
+    if(!confirm('Kustutad kõik treeningkanded?'))return;
+    ST.sessions=[];ST.globalSessions=[];markDirtyAndSync();toast('Kanded kustutatud','ok');
+  });
+});
+qs('clearAll').addEventListener('click',function(){
+  requireHeadCoach(function(){
+    if(!confirm('Kustutad KÕIK andmed?'))return;
+    localStorage.removeItem(LS);location.reload();
+  });
+});
 qs('goalEditBtn').addEventListener('click',openGoalModal);
 qs('goalmClose').addEventListener('click',closeGoalModal);
 qs('goalCancel').addEventListener('click',closeGoalModal);
 qs('goalSave').addEventListener('click',saveGoal);
+qs('hcmClose').addEventListener('click',closeHeadCoachModal);
+qs('hcCancel').addEventListener('click',closeHeadCoachModal);
+qs('hcSubmit').addEventListener('click',submitHeadCoachPassword);
+qs('hcPassword').addEventListener('keydown',function(e){if(e.key==='Enter')submitHeadCoachPassword();});
 
 // close modals on bg click
 [qs('addPlayerModal'),qs('exModal'),qs('goalModal')].forEach(function(m){if(m)m.addEventListener('click',function(e){if(e.target===m)m.style.display='none';});});
+qs('hcModal').addEventListener('click',function(e){if(e.target===qs('hcModal'))closeHeadCoachModal();});
 
 lsLoad();
 scheduleMidnightRefresh();
