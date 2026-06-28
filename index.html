@@ -614,14 +614,39 @@ input,select,textarea{font-family:'Barlow',sans-serif;box-sizing:border-box}
 <!-- AVAILABILITY -->
 <div id="view-availability" class="view">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.04em">Saadavus</div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <label style="font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.08em">Kuupäev:</label>
-      <input type="date" id="availDate" style="background:var(--c1);border:1px solid var(--b2);border-radius:7px;padding:5px 9px;color:var(--tx);font-size:11px;outline:none">
-    </div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.04em">Treeningud</div>
+    <button class="btn or" id="addTrainingBtn" style="display:none"><i class="ti ti-plus"></i> Lisa treening</button>
   </div>
   <div class="infobox" id="availExplain" style="border-left-color:var(--bl)"></div>
   <div id="availContent"></div>
+</div>
+
+<!-- TRAINING MODAL -->
+<div class="modal-bg" id="trainingModal" style="display:none">
+  <div class="modal">
+    <div class="mhdr"><span class="mtitle" id="trainingModalTitle">Lisa treening</span><button class="mcls" id="tmClose">&#x2715;</button></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="frow">
+        <div class="fg"><label>Kuup&#228;ev</label><input type="date" id="tmDate"></div>
+        <div class="fg"><label>Kellaaeg</label><input type="time" id="tmTime" value="18:00"></div>
+      </div>
+      <div class="fg"><label>Kestus</label>
+        <select id="tmDur">
+          <option value="30">30 minutit</option>
+          <option value="45">45 minutit</option>
+          <option value="60">1 tund</option>
+          <option value="90" selected>1,5 tundi</option>
+          <option value="120">2 tundi</option>
+        </select>
+      </div>
+      <div class="fg"><label>Asukoht (valikuline)</label><input type="text" id="tmLocation" placeholder="nt J&#245;hvi spordihall"></div>
+      <div class="fg"><label>M&#228;rkused (valikuline)</label><textarea id="tmNotes" placeholder="nt Toome v&#245;istkonnaga spordivahendid kaasa" style="min-height:60px"></textarea></div>
+      <div style="display:flex;gap:7px;margin-top:4px">
+        <button class="btn or" id="tmSave">Salvesta</button>
+        <button class="btn" id="tmCancel">T&#252;hista</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- SETTINGS -->
@@ -963,10 +988,10 @@ var BADGES=[
 //  STATE + LOCALSTORAGE
 // ═══════════════════════════════════════════
 var LS='ciq_v3';
-var ST={players:[],sessions:[],customDrills:[],avail:{},gsUrl:SHEETS_URL,globalSessions:[],selPlayer:null,goals:{}};
+var ST={players:[],sessions:[],customDrills:[],avail:{},gsUrl:SHEETS_URL,globalSessions:[],selPlayer:null,goals:{},trainings:[]};
 
 function lsLoad(){
-  try{var r=localStorage.getItem(LS);if(r){var d=JSON.parse(r);ST.players=d.players||[];ST.sessions=d.sessions||[];ST.customDrills=d.customDrills||[];ST.avail=d.avail||{};ST.gsUrl=d.gsUrl||SHEETS_URL;ST.globalSessions=d.globalSessions||[];ST.selPlayer=d.selPlayer||null;ST.goals=d.goals||{};}}catch(e){}
+  try{var r=localStorage.getItem(LS);if(r){var d=JSON.parse(r);ST.players=d.players||[];ST.sessions=d.sessions||[];ST.customDrills=d.customDrills||[];ST.avail=d.avail||{};ST.gsUrl=d.gsUrl||SHEETS_URL;ST.globalSessions=d.globalSessions||[];ST.selPlayer=d.selPlayer||null;ST.goals=d.goals||{};ST.trainings=d.trainings||[];}}catch(e){}
 }
 function lsSave(){try{localStorage.setItem(LS,JSON.stringify(ST));}catch(e){}}
 
@@ -1520,39 +1545,145 @@ function renderExManage(){
 // ═══════════════════════════════════════════
 //  AVAILABILITY
 // ═══════════════════════════════════════════
+
 function renderAvail(){
   var el=qs('availContent');if(!el)return;
   var ex=qs('availExplain');
-  if(ex)ex.textContent=ROLE==='coach'
-    ?'Märgi treeningu kuupäev ja vaata, kes mängijatest on kinnitanud tulekut. See ei ole treeningu logimine — vaid lihtne kohaloleku kinnitus.'
-    :'Treener valib treeningu kuupäeva ja sina kinnitad, kas tuled kohale. See on eraldi treeningu enda logimisest (mida teed Avalehel).';
-  var di=qs('availDate');if(!di.value)di.value=new Date().toISOString().split('T')[0];
-  var date=di.value;di.onchange=renderAvail;
-  if(!ST.players.length){el.innerHTML='<div style="text-align:center;padding:40px 0;color:var(--mu)"><div style="font-size:32px;margin-bottom:8px">📅</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:15px;text-transform:uppercase">Lisa mängijaid esmalt</div></div>';return;}
-  var da=ST.avail[date]||{};
+  var addBtn=qs('addTrainingBtn');
   if(ROLE==='coach'){
-    var avl=ST.players.filter(function(p){return da[p.id]==='yes';});
-    var navl=ST.players.filter(function(p){return da[p.id]==='no';});
-    var unk=ST.players.filter(function(p){return !da[p.id];});
-    var h='<div class="sgrid" style="margin-bottom:14px"><div class="sc"><div class="scn" style="color:var(--tl)">'+avl.length+'</div><div class="scl">Saadaval</div></div><div class="sc"><div class="scn" style="color:var(--rd)">'+navl.length+'</div><div class="scl">Ei tule</div></div><div class="sc"><div class="scn" style="color:var(--mu)">'+unk.length+'</div><div class="scl">Vastamata</div></div></div><div class="avgrid">';
-    ST.players.forEach(function(p){var st=da[p.id]||'';h+='<div class="avcard '+(st==='yes'?'yes':st==='no'?'no':'')+'"><div style="display:flex;align-items:center;gap:9px;margin-bottom:7px"><div style="width:32px;height:32px;border-radius:50%;background:'+p.color+'22;color:'+p.color+';display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:12px;flex-shrink:0">'+ini(p.name)+'</div><div><div class="avname">'+p.name+'</div><div class="avpos">'+p.pos+'</div></div></div><div class="avtog"><button class="avbtn yes '+(st==='yes'?'on':'')+'" data-pid="'+p.id+'" data-date="'+date+'" data-st="yes">✓ Tuleb</button><button class="avbtn no '+(st==='no'?'on':'')+'" data-pid="'+p.id+'" data-date="'+date+'" data-st="no">✕ Ei tule</button></div></div>';});
-    h+='</div>';el.innerHTML=h;
+    if(ex)ex.textContent='Lisa treeningud kellaaegadega. Mangijad saavad kinnitada kas tulevad. Naed reaalajas kes on olnud jah.';
+    if(addBtn)addBtn.style.display='';
   } else {
-    var pid=CUST_PID;var p=ST.players.find(function(x){return x.id===pid;});if(!p){el.innerHTML='';return;}
-    var st=(ST.avail[date]||{})[pid]||'';
-    var h='<div class="pdcard" style="max-width:400px"><div class="pdhdr"><div class="pdav" style="background:'+p.color+'22;color:'+p.color+'">'+ini(p.name)+'</div><div><div class="pdname">'+p.name+'</div><div class="pdpos">'+p.pos+'</div></div></div><div style="font-size:13px;color:var(--mu);margin-bottom:12px">Kas tuled treeninguele <b style="color:var(--tx)">'+date+'</b>?</div><div style="display:flex;gap:9px"><button class="btn '+(st==='yes'?'or':'')+'" data-pid="'+pid+'" data-date="'+date+'" data-st="yes">✓ Tulen</button><button class="btn rd '+(st==='no'?'on':'')+'" data-pid="'+pid+'" data-date="'+date+'" data-st="no">✕ Ei tule</button></div>'+(st?'<div style="margin-top:10px;font-size:12px;color:var(--mu)">Vastus: <b style="color:'+(st==='yes'?'var(--tl)':'var(--rd)')+'">'+( st==='yes'?'Tulen':'Ei tule')+'</b></div>':'')+'</div>';
-    var h2='<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.04em;margin:14px 0 10px">Selle nädala saadavus</div><div style="display:flex;gap:5px;flex-wrap:wrap">';
-    for(var i=0;i<7;i++){var d=new Date();d.setDate(d.getDate()-d.getDay()+1+i);var ds=d.toISOString().split('T')[0];var sv=(ST.avail[ds]||{})[pid]||'';var days=['E','T','K','N','R','L','P'];h2+='<div style="flex:1;min-width:36px;background:var(--c1);border-radius:7px;padding:7px 3px;text-align:center;border:1px solid '+(sv==='yes'?'var(--tl)':sv==='no'?'var(--rd)':'var(--b2)')+'"><div style="font-size:9px;color:var(--di);text-transform:uppercase;margin-bottom:3px">'+days[i]+'</div><div style="font-size:13px">'+(sv==='yes'?'✓':sv==='no'?'✕':'·')+'</div></div>';}
-    h2+='</div>';
-    el.innerHTML=h+h2;
+    if(ex)ex.textContent='Treener on planeerinud jargmised treeningud. Kinnita oma osalemine.';
+    if(addBtn)addBtn.style.display='none';
   }
-  el.querySelectorAll('[data-st]').forEach(function(b){b.addEventListener('click',function(){setAvail(b.dataset.date,b.dataset.pid,b.dataset.st);renderAvail();});});
+
+  var now=new Date();now.setHours(0,0,0,0);
+  var trainings=(ST.trainings||[]).filter(function(t){
+    var td=new Date(t.date);td.setHours(0,0,0,0);
+    return td>=now;
+  }).sort(function(a,b){return (a.date+a.time).localeCompare(b.date+b.time);});
+
+  if(!trainings.length){
+    el.innerHTML='<div style="text-align:center;padding:40px 0;color:var(--mu)"><div style="font-size:36px;margin-bottom:10px">\u{1F4C5}</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:15px;text-transform:uppercase;margin-bottom:6px">'+(ROLE==='coach'?'Pole planeeritud treeninguid':'Treener pole veel treeninguid lisanud')+'</div><div style="font-size:12px;color:var(--di)">'+(ROLE==='coach'?'Vajuta &quot;+ Lisa treening&quot; et alustada':'Vaata hiljem uuesti')+'</div></div>';
+    return;
+  }
+
+  var h='';
+  var dayNames=['p\u00fchap\u00e4ev','esmasp\u00e4ev','teisip\u00e4ev','kolmap\u00e4ev','neljap\u00e4ev','reede','laup\u00e4ev'];
+
+  trainings.forEach(function(tr){
+    var avail=ST.avail[tr.id]||{};
+    var yes=ST.players.filter(function(p){return avail[p.id]==='yes';});
+    var no=ST.players.filter(function(p){return avail[p.id]==='no';});
+    var unk=ST.players.filter(function(p){return !avail[p.id];});
+    var durH=Math.floor(tr.dur/60),durM=tr.dur%60;
+    var durStr=durH>0?(durH+'h'+(durM>0?' '+durM+'min':'')):(durM+'min');
+    var dateObj=new Date(tr.date+'T'+tr.time);
+    var isToday=tr.date===new Date().toISOString().split('T')[0];
+    var dayName=dayNames[dateObj.getDay()];
+
+    h+='<div style="background:var(--c1);border-radius:12px;padding:16px;margin-bottom:12px;border:1px solid '+(isToday?'var(--or)':'var(--b2)')+'">';
+
+    // Header
+    h+='<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:8px"><div>';
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">';
+    if(isToday)h+='<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--ord);color:var(--or);text-transform:uppercase;letter-spacing:.06em">T\u00e4na</span>';
+    h+='<span style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:17px;text-transform:uppercase">'+dayName+', '+tr.date.split('-').reverse().join('.')+'</span>';
+    h+='</div>';
+    h+='<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">';
+    h+='<span style="font-size:14px;color:var(--tx);font-weight:600">\u{1F550} '+tr.time+'</span>';
+    h+='<span style="font-size:12px;color:var(--mu)">\u23f1 '+durStr+'</span>';
+    if(tr.location)h+='<span style="font-size:12px;color:var(--mu)">\u{1F4CD} '+tr.location+'</span>';
+    h+='</div>';
+    if(tr.notes)h+='<div style="font-size:12px;color:var(--di);margin-top:5px;line-height:1.5">'+tr.notes+'</div>';
+    h+='</div>';
+
+    if(ROLE==='coach'){
+      h+='<div style="display:flex;gap:5px;flex-shrink:0">';
+      h+='<button class="ibtn" data-tid="'+tr.id+'" data-ta="edit">\u270f\ufe0f</button>';
+      h+='<button class="ibtn" data-tid="'+tr.id+'" data-ta="del" style="color:var(--rd)">\u{1F5D1}</button>';
+      h+='</div>';
+    }
+    h+='</div>';
+
+    if(ROLE==='coach'){
+      // Stats
+      h+='<div style="display:flex;gap:8px;margin-bottom:12px">';
+      h+='<div style="flex:1;background:rgba(29,158,117,.1);border:1px solid rgba(29,158,117,.25);border-radius:8px;padding:8px;text-align:center"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:22px;color:var(--tl)">'+yes.length+'</div><div style="font-size:10px;color:var(--di);text-transform:uppercase;letter-spacing:.06em">Tulevad</div></div>';
+      h+='<div style="flex:1;background:rgba(226,75,74,.08);border:1px solid rgba(226,75,74,.2);border-radius:8px;padding:8px;text-align:center"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:22px;color:var(--rd)">'+no.length+'</div><div style="font-size:10px;color:var(--di);text-transform:uppercase;letter-spacing:.06em">Ei tule</div></div>';
+      h+='<div style="flex:1;background:var(--c2);border:1px solid var(--b2);border-radius:8px;padding:8px;text-align:center"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:22px;color:var(--mu)">'+unk.length+'</div><div style="font-size:10px;color:var(--di);text-transform:uppercase;letter-spacing:.06em">Vastamata</div></div>';
+      h+='</div>';
+      // Player lists
+      function playerPills(list,bg,border,nameColor){var s='<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px">';list.forEach(function(p){s+='<div style="display:flex;align-items:center;gap:5px;background:'+bg+';border:1px solid '+border+';border-radius:20px;padding:4px 10px 4px 6px"><div style="width:22px;height:22px;border-radius:50%;background:'+p.color+'22;color:'+p.color+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">'+ini(p.name)+'</div><span style="font-size:12px;color:'+nameColor+'">'+p.name+'</span></div>';});return s+'</div>';}
+      if(yes.length)h+='<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--tl);margin-bottom:6px">\u2713 Tulevad ('+yes.length+')</div>'+playerPills(yes,'rgba(29,158,117,.1)','rgba(29,158,117,.2)','var(--tx)');
+      if(no.length)h+='<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--rd);margin-bottom:6px">\u2715 Ei tule ('+no.length+')</div>'+playerPills(no,'rgba(226,75,74,.08)','rgba(226,75,74,.15)','var(--mu)');
+      if(unk.length)h+='<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--di);margin-bottom:6px">\u00b7 Vastamata ('+unk.length+')</div>'+playerPills(unk,'var(--c2)','var(--b2)','var(--mu)');
+    } else {
+      var pid=CUST_PID;
+      if(pid){
+        var mySt=(avail[pid]||'');
+        h+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">';
+        h+='<button class="btn '+(mySt==='yes'?'or':'')+'" data-tid="'+tr.id+'" data-pid="'+pid+'" data-st="yes">\u2713 Tulen</button>';
+        h+='<button class="btn '+(mySt==='no'?'rd on':'')+'" data-tid="'+tr.id+'" data-pid="'+pid+'" data-st="no">\u2715 Ei tule</button>';
+        if(mySt)h+='<span style="font-size:12px;color:var(--mu)">Vastus: <b style="color:'+(mySt==='yes'?'var(--tl)':'var(--rd)')+'">'+(mySt==='yes'?'Tulen':'Ei tule')+'</b></span>';
+        h+='</div>';
+        var others=yes.filter(function(p){return p.id!==pid;});
+        if(others.length)h+='<div style="font-size:11px;color:var(--mu)">Tulevad ka: '+others.map(function(p){return '<b style="color:var(--tx)">'+p.name.split(' ')[0]+'</b>';}).join(', ')+'</div>';
+      }
+    }
+    h+='</div>';
+  });
+
+  el.innerHTML=h;
+  el.querySelectorAll('[data-tid][data-pid][data-st]').forEach(function(b){b.addEventListener('click',function(){setAvailForTraining(b.dataset.tid,b.dataset.pid,b.dataset.st);});});
+  el.querySelectorAll('[data-ta]').forEach(function(b){b.addEventListener('click',function(){if(b.dataset.ta==='del')deleteTraining(b.dataset.tid);else if(b.dataset.ta==='edit')openTrainingModal(b.dataset.tid);});});
+}
+
+function setAvailForTraining(tid,pid,st){
+  if(!ST.avail[tid])ST.avail[tid]={};
+  ST.avail[tid][pid]=st;
+  markDirtyAndSync();renderAvail();
+  toast(st==='yes'?'Kinnitatud \u2014 tuled!':'Vastus salvestatud','ok');
 }
 
 function setAvail(date,pid,st){
   if(!ST.avail)ST.avail={};if(!ST.avail[date])ST.avail[date]={};
-  ST.avail[date][pid]=st;markDirtyAndSync();toast('Saadavus salvestatud','ok');
+  ST.avail[date][pid]=st;markDirtyAndSync();
 }
+
+var editTrainingId=null;
+function openTrainingModal(id){
+  editTrainingId=id||null;
+  qs('trainingModalTitle').textContent=id?'Muuda treeningut':'Lisa treening';
+  if(id){
+    var tr=(ST.trainings||[]).find(function(t){return t.id===id;});
+    if(tr){qs('tmDate').value=tr.date;qs('tmTime').value=tr.time;qs('tmDur').value=String(tr.dur);qs('tmLocation').value=tr.location||'';qs('tmNotes').value=tr.notes||'';}
+  } else {
+    qs('tmDate').value=new Date().toISOString().split('T')[0];qs('tmTime').value='18:00';
+    qs('tmDur').value='90';qs('tmLocation').value='';qs('tmNotes').value='';
+  }
+  qs('trainingModal').style.display='flex';
+}
+function closeTrainingModal(){qs('trainingModal').style.display='none';editTrainingId=null;}
+function saveTraining(){
+  var date=qs('tmDate').value,time=qs('tmTime').value;
+  if(!date){toast('Vali kuup\u00e4ev','err');return;}
+  if(!ST.trainings)ST.trainings=[];
+  var tr={id:editTrainingId||(Date.now().toString()),date:date,time:time,dur:parseInt(qs('tmDur').value)||90,location:(qs('tmLocation').value||'').trim(),notes:(qs('tmNotes').value||'').trim()};
+  if(editTrainingId){var idx=ST.trainings.findIndex(function(t){return t.id===editTrainingId;});if(idx>=0)ST.trainings[idx]=tr;else ST.trainings.push(tr);}
+  else ST.trainings.push(tr);
+  markDirtyAndSync();closeTrainingModal();renderAvail();
+  toast((editTrainingId?'Treening uuendatud':'Treening lisatud')+' \u2014 '+date+' '+time,'ok');
+}
+function deleteTraining(id){
+  requireHeadCoach(function(){
+    if(!confirm('Kustutad treeningu?'))return;
+    ST.trainings=(ST.trainings||[]).filter(function(t){return t.id!==id;});
+    markDirtyAndSync();renderAvail();toast('Treening kustutatud','err');
+  });
+}
+
 
 // ═══════════════════════════════════════════
 //  LEADERBOARD
@@ -2245,6 +2376,11 @@ qs('logSync').addEventListener('click',syncToSheets);
 qs('gsUrlSave').addEventListener('click',function(){ST.gsUrl=(qs('gsUrl').value||'').trim();lsSave();var s=qs('gsStatus');if(s)s.textContent=ST.gsUrl?'URL salvestatud ✓':'Pole seadistatud';toast('Seaded salvestatud','ok');});
 qs('gsTestBtn').addEventListener('click',testSheetsConnection);
 qs('gsSyncAllBtn').addEventListener('click',syncAllToSheets);
+qs('addTrainingBtn').addEventListener('click',function(){openTrainingModal(null);});
+qs('tmClose').addEventListener('click',closeTrainingModal);
+qs('tmCancel').addEventListener('click',closeTrainingModal);
+qs('tmSave').addEventListener('click',saveTraining);
+qs('trainingModal').addEventListener('click',function(e){if(e.target===qs('trainingModal'))closeTrainingModal();});
 qs('gsPullBtn').addEventListener('click',async function(){
   var btn=qs('gsPullBtn');btn.disabled=true;btn.textContent='Laen...';
   var res=await pullFromSheets();
