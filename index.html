@@ -13,6 +13,9 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -497,6 +500,14 @@ input,select,textarea{font-family:'Barlow',sans-serif;box-sizing:border-box}
     <div class="tcol tc-r">
       <div class="tchdr"><span class="tcht">AI analüüs</span><span class="tchs" id="hAIHint">Reaalajas</span></div>
       <div class="lbadge" id="hLiveBadge" style="display:none"><div class="ldot lpulse"></div><span id="hLiveTxt">AI jälgib...</span></div>
+      <div id="aiCamWrap" style="display:none;position:relative;margin:8px 10px 6px">
+        <canvas id="aiCanvas" style="width:100%;border-radius:8px;display:block;background:#000"></canvas>
+        <div id="aiCamStatus" style="position:absolute;top:5px;left:6px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:rgba(255,107,26,.85);color:#fff">Laen AI...</div>
+        <button id="aiCamOff" style="position:absolute;top:5px;right:6px;background:rgba(0,0,0,.5);border:none;color:#fff;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;line-height:1">✕</button>
+      </div>
+      <div style="padding:6px 10px 4px">
+        <button id="aiCamBtn" class="btn" style="width:100%;justify-content:center;font-size:11px;padding:6px">📷 Lülita kaamera sisse</button>
+      </div>
       <div class="afeed" id="hAIFeed"></div>
     </div>
   </div>
@@ -2255,11 +2266,193 @@ function jumpTo(i){if(APP.phase==='idle'){APP.cD=i;renderHomeDrillList();renderH
 var PILL_MAP={idle:['sp0','Ootel'],active:['sp1','Aktiivne'],rest:['sp2','Puhkepaus'],done:['sp3','Valmis']};
 function setPillH(s){var p=qs('pill');if(!p)return;var m=PILL_MAP[s];p.className='spill '+m[0];p.textContent=m[1];}
 
+// ═══════════════════════════════════════════
+//  REAL AI — MediaPipe Pose Estimation
+// ═══════════════════════════════════════════
+var AI={pose:null,cam:null,video:null,active:false,frameId:null};
+
+function toDeg(rad){return Math.round(rad*180/Math.PI);}
+
+function angle3(a,b,c){
+  // angle at point b formed by a-b-c
+  var ab=[a.x-b.x,a.y-b.y],cb=[c.x-b.x,c.y-b.y];
+  var dot=ab[0]*cb[0]+ab[1]*cb[1];
+  var magAB=Math.sqrt(ab[0]*ab[0]+ab[1]*ab[1]);
+  var magCB=Math.sqrt(cb[0]*cb[0]+cb[1]*cb[1]);
+  if(!magAB||!magCB)return 0;
+  return toDeg(Math.acos(Math.max(-1,Math.min(1,dot/(magAB*magCB)))));
+}
+
+function analyzePose(lm){
+  // lm = array of 33 landmarks {x,y,z,visibility}
+  var results={};
+  var L=lm;
+
+  // Key landmark indices (MediaPipe Pose)
+  // 11=L shoulder, 12=R shoulder, 13=L elbow, 14=R elbow
+  // 15=L wrist, 16=R wrist, 23=L hip, 24=R hip
+  // 25=L knee, 26=R knee, 27=L ankle, 28=R ankle
+
+  try{
+    // Knee angle (left)
+    var lKnee=angle3(L[23],L[25],L[27]);
+    results.lKnee=lKnee;
+
+    // Knee angle (right)
+    var rKnee=angle3(L[24],L[26],L[28]);
+    results.rKnee=rKnee;
+
+    // Trunk lean (angle from vertical)
+    var shoulderMidX=(L[11].x+L[12].x)/2,shoulderMidY=(L[11].y+L[12].y)/2;
+    var hipMidX=(L[23].x+L[24].x)/2,hipMidY=(L[23].y+L[24].y)/2;
+    var trunkAngle=toDeg(Math.atan2(Math.abs(shoulderMidX-hipMidX),Math.abs(shoulderMidY-hipMidY)));
+    results.trunkAngle=trunkAngle;
+
+    // Shoulder symmetry (height difference)
+    var shoulderDiff=Math.abs(L[11].y-L[12].y)*100;
+    results.shoulderSym=Math.round(100-shoulderDiff*50);
+
+    // Hip height (how low stance is - lower hips = more bent = lower y means higher on screen, so flip)
+    var hipHeight=1-((L[23].y+L[24].y)/2);
+    results.stanceLow=hipHeight<0.35; // hips below 65% of frame height
+
+    // Body visibility confidence
+    var vis=[L[11],L[12],L[23],L[24],L[25],L[26]].reduce(function(a,p){return a+p.visibility;},0)/6;
+    results.confidence=Math.round(vis*100);
+  }catch(e){}
+  return results;
+}
+
+function poseResultsToFeed(poseData,drillTc){
+  // Convert real pose measurements to feed items based on drill category
+  var feed=[];
+  var tc=drillTc||'tor';
+  var conf=poseData.confidence||0;
+  if(conf<40){
+    feed.push({n:'Kaamera',v:'Astu tagasi',tr:'Kogu keha peab olema näha',tc:'tne'});
+    return feed;
+  }
+
+  if(tc==='ttl'||tc==='tgy'){
+    // Footwork/Defense — focus on knees and stance
+    var avgKnee=Math.round((poseData.lKnee+poseData.rKnee)/2);
+    var kneeOk=avgKnee>=90&&avgKnee<=140;
+    feed.push({n:'Põlvede nurk',v:avgKnee+'°',tr:kneeOk?'Ideaalne':'Painuta rohkem',tc:kneeOk?'tup':'tne'});
+    feed.push({n:'Asend',v:poseData.stanceLow?'Madal':'Liiga kõrge',tr:poseData.stanceLow?'Hea kaitseasend':'Lase puusad alla',tc:poseData.stanceLow?'tup':'tne'});
+    var symOk=poseData.shoulderSym>80;
+    feed.push({n:'Tasakaal',v:poseData.shoulderSym+'%',tr:symOk?'Stabiilne':'Kisu vasakule',tc:symOk?'tup':'tne'});
+  } else if(tc==='tpu'){
+    // Shooting — trunk angle and symmetry
+    var trunkOk=poseData.trunkAngle<15;
+    feed.push({n:'Keha sirge',v:poseData.trunkAngle+'°',tr:trunkOk?'Hea asend':'Sirgu rohkem',tc:trunkOk?'tup':'tne'});
+    var symOk2=poseData.shoulderSym>85;
+    feed.push({n:'Õlad',v:poseData.shoulderSym+'%',tr:symOk2?'Joonduses':'Õlad tasaseks',tc:symOk2?'tup':'tne'});
+    var kOk=poseData.rKnee>=100&&poseData.rKnee<=150;
+    feed.push({n:'Põlv (vis)',v:poseData.rKnee+'°',tr:kOk?'Hea':'Painuta rohkem',tc:kOk?'tup':'tne'});
+  } else {
+    // Ball control / default — general stance
+    var avgK=Math.round((poseData.lKnee+poseData.rKnee)/2);
+    var kOk2=avgK>=100&&avgK<=155;
+    feed.push({n:'Põlvede nurk',v:avgK+'°',tr:kOk2?'Hea':'Painuta põlvi',tc:kOk2?'tup':'tne'});
+    var tOk=poseData.trunkAngle<20;
+    feed.push({n:'Keha asend',v:poseData.trunkAngle+'°',tr:tOk?'Püsti':'Kummardad liiga',tc:tOk?'tup':'tne'});
+    feed.push({n:'Tasakaal',v:poseData.shoulderSym+'%',tr:poseData.shoulderSym>80?'Stabiilne':'Hoia tasakaalu',tc:poseData.shoulderSym>80?'tup':'tne'});
+  }
+  feed.push({n:'Tuvastus',v:conf+'%',tr:conf>70?'Selge vaade':'Astu kaamera ette',tc:conf>70?'tup':'tne'});
+  return feed;
+}
+
+function updateAIFeed(poseData){
+  var d=homeList()[APP.cD];
+  var feedItems=poseResultsToFeed(poseData,d?d.tc:'tor');
+  var feed=qs('hAIFeed');if(!feed)return;
+  feed.innerHTML=feedItems.map(function(item){
+    return '<div class="ac"><div class="acn">'+item.n+'</div><div class="acv '+(item.tc==='tup'?'tup':item.tc==='tne'?'tdn':'')+'">'+item.v+'</div><div class="acf">'+item.tr+'</div></div>';
+  }).join('');
+}
+
+function initMediaPipe(){
+  if(AI.pose)return Promise.resolve();
+  return new Promise(function(resolve,reject){
+    if(typeof Pose==='undefined'){reject(new Error('MediaPipe ei ole laetud'));return;}
+    AI.pose=new Pose({locateFile:function(f){return 'https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/'+f;}});
+    AI.pose.setOptions({modelComplexity:1,smoothLandmarks:true,enableSegmentation:false,minDetectionConfidence:0.5,minTrackingConfidence:0.5});
+    AI.pose.onResults(function(results){
+      var canvas=qs('aiCanvas');if(!canvas)return;
+      var ctx=canvas.getContext('2d');
+      ctx.save();ctx.clearRect(0,0,canvas.width,canvas.height);
+      if(results.image){ctx.drawImage(results.image,0,0,canvas.width,canvas.height);}
+      if(results.poseLandmarks){
+        drawConnectors(ctx,results.poseLandmarks,POSE_CONNECTIONS,{color:'rgba(255,107,26,0.7)',lineWidth:2});
+        drawLandmarks(ctx,results.poseLandmarks,{color:'#FF6B1A',lineWidth:1,radius:3});
+        var poseData=analyzePose(results.poseLandmarks);
+        updateAIFeed(poseData);
+        var statusEl=qs('aiCamStatus');
+        if(statusEl)statusEl.textContent='\u2022 AI j\u00e4lgib \u2014 '+( poseData.confidence||0)+'%';
+      }
+      ctx.restore();
+    });
+    AI.pose.initialize().then(resolve).catch(reject);
+  });
+}
+
+async function startCameraAI(){
+  var wrap=qs('aiCamWrap');var btn=qs('aiCamBtn');
+  var statusEl=qs('aiCamStatus');
+  if(AI.active){stopCameraAI();return;}
+  try{
+    if(btn){btn.textContent='Laen AI...\u23f3';btn.disabled=true;}
+    if(statusEl)statusEl.textContent='Laen MediaPipe...';
+    await initMediaPipe();
+    var stream=await navigator.mediaDevices.getUserMedia({video:{width:320,height:240,facingMode:'user'},audio:false});
+    var canvas=qs('aiCanvas');
+    canvas.width=320;canvas.height=240;
+    if(!AI.video){AI.video=document.createElement('video');AI.video.playsInline=true;AI.video.muted=true;}
+    AI.video.srcObject=stream;
+    await AI.video.play();
+    if(wrap)wrap.style.display='';
+    if(btn){btn.textContent='\ud83d\udcf7 Kaamera v\u00e4lja';btn.disabled=false;btn.style.background='rgba(226,75,74,.15)';btn.style.color='var(--rd)';}
+    AI.active=true;AI.stream=stream;
+    var sendFrame=async function(){
+      if(!AI.active)return;
+      if(AI.video.readyState>=2){await AI.pose.send({image:AI.video});}
+      AI.frameId=requestAnimationFrame(sendFrame);
+    };
+    AI.frameId=requestAnimationFrame(sendFrame);
+  }catch(e){
+    toast('Kaamera viga: '+e.message,'err');
+    if(btn){btn.textContent='\ud83d\udcf7 L\u00fclita kaamera sisse';btn.disabled=false;btn.style.background='';btn.style.color='';}
+  }
+}
+
+function stopCameraAI(){
+  AI.active=false;
+  if(AI.frameId)cancelAnimationFrame(AI.frameId);
+  if(AI.stream)AI.stream.getTracks().forEach(function(t){t.stop();});
+  AI.stream=null;
+  var wrap=qs('aiCamWrap');if(wrap)wrap.style.display='none';
+  var btn=qs('aiCamBtn');
+  if(btn){btn.textContent='\ud83d\udcf7 L\u00fclita kaamera sisse';btn.disabled=false;btn.style.background='';btn.style.color='';}
+}
+
 function startLiveAI(){
   APP.aIdx=0;showEl('hLiveBadge','flex');qs('hAIHint').textContent='Reaalajas';
-  var d=homeList()[APP.cD];if(d.live&&d.live.length)renderHomeAI({stats:d.live[0]});
-  clearInterval(APP.aI);
-  APP.aI=setInterval(function(){APP.aIdx=(APP.aIdx+1)%(d.live?d.live.length:1);if(d.live&&d.live[APP.aIdx])renderHomeAI({stats:d.live[APP.aIdx]});var m=['Analüüsin...','Mõõdan...','Kontrollin...','Arvutan...'];qs('hLiveTxt').textContent=m[APP.aIdx%m.length];},5000);
+  var d=homeList()[APP.cD];
+  if(AI.active){
+    // Real camera AI is running — it updates feed directly via onResults callback
+    qs('hLiveTxt').textContent='Kaamera AI jälgib...';
+  } else {
+    // Fallback: rotate through hardcoded sample data
+    if(d.live&&d.live.length)renderHomeAI({stats:d.live[0]});
+    clearInterval(APP.aI);
+    APP.aI=setInterval(function(){
+      if(AI.active){clearInterval(APP.aI);return;} // stop simulation if camera starts
+      APP.aIdx=(APP.aIdx+1)%(d.live?d.live.length:1);
+      if(d.live&&d.live[APP.aIdx])renderHomeAI({stats:d.live[APP.aIdx]});
+      var m=['Analüüsin...','Mõõdan...','Kontrollin...','Arvutan...'];
+      qs('hLiveTxt').textContent=m[APP.aIdx%m.length];
+    },5000);
+  }
 }
 function stopLiveAI(){clearInterval(APP.aI);}
 
@@ -2370,6 +2563,8 @@ qs('exCancel').addEventListener('click',closeExForm);
 qs('exSave').addEventListener('click',saveEx);
 qs('addStepBtn').addEventListener('click',function(){addStepInp();});
 qs('addErrBtn').addEventListener('click',function(){addErrInp();});
+qs('aiCamBtn').addEventListener('click',startCameraAI);
+qs('aiCamOff').addEventListener('click',stopCameraAI);
 qs('detailBack').addEventListener('click',closeDetail);
 qs('logSave').addEventListener('click',saveSession);
 qs('logSync').addEventListener('click',syncToSheets);
