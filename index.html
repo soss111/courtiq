@@ -503,6 +503,7 @@ input,select,textarea{font-family:'Barlow',sans-serif;box-sizing:border-box}
       <div id="aiCamWrap" style="display:none;position:relative;margin:8px 10px 6px">
         <canvas id="aiCanvas" style="width:100%;border-radius:8px;display:block;background:#000"></canvas>
         <div id="aiCamStatus" style="position:absolute;top:5px;left:6px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:rgba(255,107,26,.85);color:#fff">Laen AI...</div>
+        <button id="aiCamFlip" style="position:absolute;top:5px;right:32px;background:rgba(0,0,0,.5);border:none;color:#fff;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;line-height:1">🔄</button>
         <button id="aiCamOff" style="position:absolute;top:5px;right:6px;background:rgba(0,0,0,.5);border:none;color:#fff;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;line-height:1">✕</button>
       </div>
       <div style="padding:6px 10px 4px">
@@ -2404,10 +2405,11 @@ async function startCameraAI(){
     if(btn){btn.textContent='Laen AI...\u23f3';btn.disabled=true;}
     if(statusEl)statusEl.textContent='Laen MediaPipe...';
     await initMediaPipe();
-    var stream=await navigator.mediaDevices.getUserMedia({video:{width:320,height:240,facingMode:'user'},audio:false});
     var canvas=qs('aiCanvas');
     canvas.width=320;canvas.height=240;
     if(!AI.video){AI.video=document.createElement('video');AI.video.playsInline=true;AI.video.muted=true;}
+    if(!AI.facing)AI.facing='environment'; // default to back camera — better for full-body training shots
+    var stream=await openCameraStream(AI.facing);
     AI.video.srcObject=stream;
     await AI.video.play();
     if(wrap)wrap.style.display='';
@@ -2422,6 +2424,33 @@ async function startCameraAI(){
   }catch(e){
     toast('Kaamera viga: '+e.message,'err');
     if(btn){btn.textContent='\ud83d\udcf7 L\u00fclita kaamera sisse';btn.disabled=false;btn.style.background='';btn.style.color='';}
+  }
+}
+
+async function openCameraStream(facing){
+  // Try the requested facing mode first; if the device only has one camera
+  // (e.g. laptop), fall back to whatever is available rather than failing.
+  try{
+    return await navigator.mediaDevices.getUserMedia({video:{width:320,height:240,facingMode:{ideal:facing}},audio:false});
+  }catch(e){
+    return await navigator.mediaDevices.getUserMedia({video:{width:320,height:240},audio:false});
+  }
+}
+
+async function flipCamera(){
+  if(!AI.active)return;
+  AI.facing=(AI.facing==='environment')?'user':'environment';
+  var statusEl=qs('aiCamStatus');
+  if(statusEl)statusEl.textContent='Vahetan kaamerat...';
+  if(AI.stream)AI.stream.getTracks().forEach(function(t){t.stop();});
+  try{
+    var stream=await openCameraStream(AI.facing);
+    AI.video.srcObject=stream;
+    await AI.video.play();
+    AI.stream=stream;
+    toast(AI.facing==='environment'?'Tagakaamera':'Esikaamera','ok');
+  }catch(e){
+    toast('Kaamera vahetus ebaõnnestus: '+e.message,'err');
   }
 }
 
@@ -2565,6 +2594,7 @@ qs('addStepBtn').addEventListener('click',function(){addStepInp();});
 qs('addErrBtn').addEventListener('click',function(){addErrInp();});
 qs('aiCamBtn').addEventListener('click',startCameraAI);
 qs('aiCamOff').addEventListener('click',stopCameraAI);
+qs('aiCamFlip').addEventListener('click',flipCamera);
 qs('detailBack').addEventListener('click',closeDetail);
 qs('logSave').addEventListener('click',saveSession);
 qs('logSync').addEventListener('click',syncToSheets);
