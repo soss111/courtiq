@@ -1412,39 +1412,66 @@ async function pullFromSheets(silent){
   try{data=await gsGet(url);}
   catch(e){if(!silent)toast('Lugemine ebaõnnestus: '+e.message,'err');return{players:0,drills:0};}
 
-  var addedPlayers=0,addedDrills=0;
+  var addedPlayers=0,addedDrills=0,removedPlayers=0,removedDrills=0;
 
-  // merge players: add any from the sheet that don't exist locally (matched by ID)
+  // ── PLAYERS ──────────────────────────────
+  var sheetPlayerIds=new Set((data.mangijad||[]).map(function(r){return String(r['ID']||'');}));
+
+  // Add or update players from sheet
   (data.mangijad||[]).forEach(function(row){
     var id=String(row['ID']||'');if(!id)return;
     var exists=ST.players.find(function(p){return p.id===id;});
     if(!exists){
-      ST.players.push({id:id,name:row['Nimi']||'Tundmatu',pos:row['Positsioon']||'Mängujuht',age:row['Vanus']||'',color:COLORS[ST.players.length%COLORS.length]});
+      ST.players.push({id:id,name:row['Nimi']||'Tundmatu',pos:row['Positsioon']||'Mängujuht',age:row['Vanus']||'',color:COLORS[ST.players.length%COLORS.length],synced:true});
       addedPlayers++;
     } else {
-      // sheet is newer source of truth for name/position/age if changed there
       exists.name=row['Nimi']||exists.name;exists.pos=row['Positsioon']||exists.pos;exists.age=row['Vanus']||exists.age;
+      exists.synced=true; // mark as known to sheet
     }
   });
 
-  // merge drills: add any custom drills from the sheet not already known locally (matched by ID)
+  // Remove players that were synced to the sheet but are no longer there
+  var beforePCount=ST.players.length;
+  ST.players=ST.players.filter(function(p){
+    if(!p.synced)return true; // never synced yet — keep (don't delete unsynced local players)
+    return sheetPlayerIds.has(p.id);
+  });
+  removedPlayers=beforePCount-ST.players.length;
+  // Also clean up sessions for removed players
+  if(removedPlayers>0){
+    var remainingIds=new Set(ST.players.map(function(p){return p.id;}));
+    ST.sessions=ST.sessions.filter(function(s){return remainingIds.has(s.pid);});
+  }
+
+  // ── CUSTOM DRILLS ────────────────────────
+  var sheetDrillIds=new Set((data.harjutused||[]).map(function(r){return String(r['ID']||'');}));
+  var tcMap={'Palli kontroll':'tor','Rütm':'tbl','Jalgade töö':'ttl','Vise':'tpu','Muu':'tgy'};
+
   (data.harjutused||[]).forEach(function(row){
     var id=String(row['ID']||'');if(!id)return;
     var isBuiltin=BUILTIN.some(function(b){return b.id===id;});
-    if(isBuiltin)return; // never overwrite builtins from the sheet
+    if(isBuiltin)return;
     if(!ST.customDrills)ST.customDrills=[];
     var existing=ST.customDrills.find(function(d){return d.id===id;});
     var steps=[];try{steps=JSON.parse(row['Sammud']||'[]');}catch(e){}
     var errors=[];try{errors=JSON.parse(row['Vead']||'[]');}catch(e){}
     if(!errors.length)errors=['Hoia õige asend'];
-    var tcMap={'Palli kontroll':'tor','Rütm':'tbl','Jalgade töö':'ttl','Vise':'tpu','Muu':'tgy'};
-    var obj={id:id,name:row['Nimi']||'Harjutus',icon:row['Ikoon']||'🏀',tag:row['Kategooria']||'Muu',tc:tcMap[row['Kategooria']]||'tgy',lv:row['Tase']||'Algaja',dur:row['Kestus']||'10 min',sets:Number(row['Seeriad'])||3,setDur:Number(row['SeeriaSek'])||30,rest:Number(row['Puhkus'])||15,desc:row['Kirjeldus']||'',steps:steps,active:row['Aktiivne']!==false&&row['Aktiivne']!=='FALSE',builtin:false,errors:errors,stats:[{n:'Sooritus',v:'—',tc:'tne',f:'AI'},{n:'Asend',v:'—',tc:'tne',f:'Keha'},{n:'Rütm',v:'—',tc:'tne',f:'Tempo'},{n:'Kordused',v:'—',tc:'tne',f:'AI'}],live:[[{n:'Sooritus',v:'Alustad',tr:'AI kalibreerub',tc:'tne',f:''},{n:'Asend',v:'—',tr:'',tc:'tne',f:''},{n:'Rütm',v:'—',tr:'',tc:'tne',f:''},{n:'Kordused',v:'—',tr:'',tc:'tne',f:''}]]};
+    var obj={id:id,name:row['Nimi']||'Harjutus',icon:row['Ikoon']||'🏀',tag:row['Kategooria']||'Muu',tc:tcMap[row['Kategooria']]||'tgy',lv:row['Tase']||'Algaja',dur:row['Kestus']||'10 min',sets:Number(row['Seeriad'])||3,setDur:Number(row['SeeriaSek'])||30,rest:Number(row['Puhkus'])||15,desc:row['Kirjeldus']||'',steps:steps,active:row['Aktiivne']!==false&&row['Aktiivne']!=='FALSE',builtin:false,synced:true,errors:errors,stats:[{n:'Sooritus',v:'—',tc:'tne',f:'AI'},{n:'Asend',v:'—',tc:'tne',f:'Keha'},{n:'Rütm',v:'—',tc:'tne',f:'Tempo'},{n:'Kordused',v:'—',tc:'tne',f:'AI'}],live:[[{n:'Sooritus',v:'Alustad',tr:'AI kalibreerub',tc:'tne',f:''},{n:'Asend',v:'—',tr:'',tc:'tne',f:''},{n:'Rütm',v:'—',tr:'',tc:'tne',f:''},{n:'Kordused',v:'—',tr:'',tc:'tne',f:''}]]};
     if(existing){var idx=ST.customDrills.indexOf(existing);ST.customDrills[idx]=obj;}
     else{ST.customDrills.push(obj);addedDrills++;}
   });
 
+  // Remove custom drills that were synced to the sheet but are no longer there
+  if(!ST.customDrills)ST.customDrills=[];
+  var beforeDCount=ST.customDrills.length;
+  ST.customDrills=ST.customDrills.filter(function(d){
+    if(!d.synced)return true; // never synced — keep local
+    return sheetDrillIds.has(d.id);
+  });
+  removedDrills=beforeDCount-ST.customDrills.length;
+
   lsSave();
-  return{players:addedPlayers,drills:addedDrills};
+  return{players:addedPlayers,drills:addedDrills,removedPlayers:removedPlayers,removedDrills:removedDrills};
 }
 
 async function syncAllToSheets(){
