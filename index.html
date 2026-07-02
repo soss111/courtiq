@@ -49,6 +49,29 @@ input,select,textarea{font-family:'Barlow',sans-serif;box-sizing:border-box}
 .tab:hover:not(.on){color:var(--tx);background:var(--ord)}
 .swbtn{font-size:10px;padding:5px 10px;border-radius:6px;border:1px solid var(--b2);background:transparent;color:var(--di);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
 .swbtn:hover{color:var(--tx);border-color:var(--mu)}
+.spill{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:20px;white-space:nowrap}
+.sp0{background:var(--c1);color:var(--di);border:1px solid var(--b2)}
+.sp1{background:rgba(255,107,26,.15);color:var(--or);border:1px solid rgba(255,107,26,.35)}
+.sp2{background:rgba(239,159,39,.12);color:#EF9F27;border:1px solid rgba(239,159,39,.35)}
+.sp3{background:rgba(29,158,117,.12);color:var(--tl);border:1px solid rgba(29,158,117,.35)}
+.nav-more-wrap{position:relative}
+.nav-more-btn{font-size:16px;line-height:1;padding:5px 9px}
+.nav-more-menu{display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--c1);border:1px solid var(--b2);border-radius:10px;padding:5px;min-width:150px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.nav-more-menu.open{display:block}
+.nav-more-menu .tab{display:block;width:100%;text-align:left;margin:0}
+.context-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--c1);border:1px solid var(--b2);border-radius:10px;padding:10px 12px;margin-bottom:12px;flex-wrap:wrap}
+.context-bar.warn{border-color:rgba(239,159,39,.45);background:rgba(239,159,39,.08)}
+.context-main{font-size:13px;color:var(--tx);line-height:1.4}
+.context-sub{font-size:11px;color:var(--mu);margin-top:2px}
+.onboard-tip{background:rgba(55,138,221,.1);border:1px solid rgba(55,138,221,.25);border-left:3px solid var(--bl);border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:flex-start}
+.onboard-tip p{font-size:12px;color:var(--mu);line-height:1.55;margin:0}
+.onboard-tip strong{color:var(--tx)}
+.onboard-dismiss{background:transparent;border:none;color:var(--di);font-size:16px;line-height:1;padding:0 2px;flex-shrink:0}
+.home-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.home-actions-main{display:flex;gap:8px;flex:1;min-width:200px}
+.home-cta{flex:1;justify-content:center;padding:12px 18px!important;font-size:13px!important;min-height:44px}
+.coach-only{display:inline-flex}
+.player-only{display:none}
 
 /* ── ROLE SCREEN ── */
 #roleScreen,#playerPickerScreen,#playerCreateScreen{background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;gap:20px}
@@ -363,9 +386,10 @@ input,select,textarea{font-family:'Barlow',sans-serif;box-sizing:border-box}
 @media(max-width:700px){
   body{font-size:15px}
   .nav{padding:10px 12px;gap:7px}
-  .nav-logo{font-size:13px}
+  .logo{font-size:17px}
   .nav-r{gap:5px;width:100%;justify-content:flex-start}
-  .ntabs{order:3;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;justify-content:flex-start}
+  .ntabs{order:3;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;justify-content:flex-start;scrollbar-width:none}
+  .ntabs::-webkit-scrollbar{display:none}
   .ntabs .tab{font-size:10px;padding:6px 9px;white-space:nowrap;flex-shrink:0}
   .swbtn{margin-left:auto}
   .vwrap{padding:12px}
@@ -373,9 +397,12 @@ input,select,textarea{font-family:'Barlow',sans-serif;box-sizing:border-box}
   .hero{flex-direction:column;align-items:flex-start;gap:14px;padding:16px}
   .hero #ballCanvas{align-self:center}
   .srow2{gap:10px}
-  .tcols{grid-template-columns:1fr;height:auto;border-radius:10px}
-  .tcol{max-height:280px}
-  .tcol.tc-c{max-height:none}
+  .tcols{grid-template-columns:1fr;height:auto;border-radius:10px;display:flex;flex-direction:column}
+  .tcol{max-height:280px;width:100%}
+  .tcol.tc-c{max-height:none;order:-2}
+  .tcol.tc-l{order:-1}
+  .tcol.tc-r{order:0}
+  .home-actions{position:sticky;top:58px;z-index:20;background:var(--bg);padding:8px 0;margin-bottom:10px;border-bottom:1px solid var(--b2)}
   .pgrid{grid-template-columns:1fr 1fr}
   .avgrid{grid-template-columns:1fr}
   .dstats{grid-template-columns:repeat(2,1fr)}
@@ -457,6 +484,11 @@ input,select,textarea{font-family:'Barlow',sans-serif;box-sizing:border-box}
     <span class="spill sp0" id="pill">Ootel</span>
     <span class="sync-indicator" id="syncIndicator" style="display:none"><span class="sync-dot sync-idle" id="syncDot"></span><span id="syncLbl"></span></span>
     <div class="ntabs" id="navTabs"></div>
+    <div class="nav-more-wrap coach-only" id="navMoreWrap" style="display:none">
+      <button class="swbtn nav-more-btn" id="navMoreBtn" aria-label="Rohkem">⋯</button>
+      <div class="nav-more-menu" id="navMoreMenu"></div>
+    </div>
+    <button class="swbtn player-only" id="swPlayerBtn" style="display:none">Vaheta mängijat</button>
     <button class="swbtn" id="swBtn">Vaheta rolli</button>
   </div>
 </nav>
@@ -489,6 +521,29 @@ input,select,textarea{font-family:'Barlow',sans-serif;box-sizing:border-box}
   </div>
   <div class="wgrid" id="weekGrid"></div>
 
+  <div class="onboard-tip" id="homeTip" style="display:none">
+    <div style="flex:1">
+      <p><strong>Kuidas alustada?</strong> Vajuta <strong>Alusta treeningut</strong>, järgi ekraanil olevat taimerit ja lülita soovi korral kaamera sisse, et AI jälgiks asendit ja palli.</p>
+    </div>
+    <button class="onboard-dismiss" id="homeTipClose" aria-label="Sulge">✕</button>
+  </div>
+
+  <div class="context-bar" id="homeContext" style="display:none">
+    <div>
+      <div class="context-main" id="homeContextMain">—</div>
+      <div class="context-sub" id="homeContextSub"></div>
+    </div>
+    <button class="btn" id="homeContextBtn" style="font-size:10px;padding:5px 10px;display:none">Vali mängija</button>
+  </div>
+
+  <div class="home-actions" id="homeActions">
+    <div class="home-actions-main">
+      <button class="btn or home-cta" id="hStartBtn">▶ Alusta treeningut</button>
+      <button class="btn" id="hResetBtn" style="display:none">↺ Lähtesta</button>
+    </div>
+    <button class="btn coach-only" id="hAddBtn">+ Lisa harjutus</button>
+  </div>
+
   <div class="tcols">
     <div class="tcol tc-l">
       <div class="tchdr"><span class="tcht">Harjutused</span><span class="tchs" id="hDProg">—</span></div>
@@ -511,12 +566,6 @@ input,select,textarea{font-family:'Barlow',sans-serif;box-sizing:border-box}
       </div>
       <div class="afeed" id="hAIFeed"></div>
     </div>
-  </div>
-
-  <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-    <button class="btn or" id="hStartBtn">▶ Alusta treeningut</button>
-    <button class="btn" id="hAddBtn">+ Lisa harjutus</button>
-    <button class="btn" id="hResetBtn" style="display:none">↺ Lähtesta</button>
   </div>
 </div>
 
@@ -581,10 +630,12 @@ input,select,textarea{font-family:'Barlow',sans-serif;box-sizing:border-box}
 
 <!-- LEADERBOARD -->
 <div id="view-leaderboard" class="view">
-  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:16px">🏆 Edetabel &amp; saavutused</div>
+  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:16px" id="lbPageTitle">🏆 Edetabel &amp; saavutused</div>
   <div class="sgrid" id="lbStats"></div>
-  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px">Mängijate edetabel</div>
+  <div id="lbPlayersSection">
+  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px" id="lbPlayersTitle">Mängijate edetabel</div>
   <div id="lbRows"></div>
+  </div>
   <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.04em;margin:18px 0 10px">Oskuste areng</div>
   <div class="bwrap"><div class="blbl"><span>Palli kontroll</span><span id="skBall">0%</span></div><div class="btrack"><div class="bfill" id="fBall" style="width:0%"></div></div></div>
   <div class="bwrap"><div class="blbl"><span>Jalgade töö</span><span id="skFoot">0%</span></div><div class="btrack"><div class="bfill bl" id="fFoot" style="width:0%"></div></div></div>
@@ -1030,20 +1081,85 @@ function toast(msg,type){
 // ═══════════════════════════════════════════
 var ROLE='coach',CUST_PID=null;
 var MY_PID_KEY='ciq_my_pid';
+var ROLE_KEY='ciq_last_role';
+var TIP_KEY='ciq_tip_seen';
 var HEAD_COACH_PASSWORD='peatreener2026'; // change this to your own password
 var isHeadCoach=false; // unlocked for the current session only, resets on reload
-var COACH_TABS=[{id:'home',l:'Avaleht'},{id:'drills',l:'Harjutused'},{id:'players',l:'Mängijad'},{id:'exercises',l:'Haldus'},{id:'leaderboard',l:'Edetabel'},{id:'availability',l:'Saadavus'},{id:'settings',l:'Seaded'}];
-var PLAYER_TABS=[{id:'home',l:'Avaleht'},{id:'drills',l:'Harjutused'},{id:'availability',l:'Saadavus'},{id:'leaderboard',l:'Areng'}];
+var COACH_PRIMARY=[{id:'home',l:'Avaleht'},{id:'drills',l:'Harjutused'},{id:'players',l:'Mängijad'},{id:'availability',l:'Treeningud'}];
+var COACH_MORE=[{id:'exercises',l:'Haldus'},{id:'leaderboard',l:'Edetabel'},{id:'settings',l:'Seaded'}];
+var COACH_TABS=COACH_PRIMARY.concat(COACH_MORE);
+var PLAYER_TABS=[{id:'home',l:'Avaleht'},{id:'drills',l:'Harjutused'},{id:'availability',l:'Treeningud'},{id:'leaderboard',l:'Areng'}];
 
 function myStoredPid(){try{return localStorage.getItem(MY_PID_KEY);}catch(e){return null;}}
 function setMyStoredPid(id){try{if(id)localStorage.setItem(MY_PID_KEY,id);else localStorage.removeItem(MY_PID_KEY);}catch(e){}}
 
 function selectRole(role){
   ROLE=role;
+  try{localStorage.setItem(ROLE_KEY,role);}catch(e){}
   hideEl('roleScreen');hideEl('playerPickerScreen');hideEl('playerCreateScreen');showEl('mainApp');
   if(role==='player'){qs('roleBadge').textContent='Mängija';qs('roleBadge').className='rbadge cust';buildNav(PLAYER_TABS);}
-  else{qs('roleBadge').textContent='Treener';qs('roleBadge').className='rbadge';buildNav(COACH_TABS);}
+  else{qs('roleBadge').textContent='Treener';qs('roleBadge').className='rbadge';buildNav(COACH_PRIMARY,COACH_MORE);}
+  applyRoleUI();
   switchView('home');initHome();setTimeout(animBall,120);
+}
+
+function applyRoleUI(){
+  var isCoach=ROLE==='coach';
+  document.querySelectorAll('.coach-only').forEach(function(el){el.style.display=isCoach?'':'none';});
+  document.querySelectorAll('.player-only').forEach(function(el){el.style.display=isCoach?'none':'';});
+  var dAdd=qs('dAddBtn');if(dAdd)dAdd.style.display=isCoach?'':'none';
+  var addTr=qs('addTrainingBtn');if(addTr)addTr.style.display=isCoach?'':'none';
+  renderHomeContext();
+  updateHomeTip();
+}
+
+function activePlayerId(){return ROLE==='coach'?ST.selPlayer:(CUST_PID||ST.selPlayer);}
+
+function activePlayer(){
+  var pid=activePlayerId();
+  return pid?ST.players.find(function(p){return p.id===pid;}):null;
+}
+
+function renderHomeContext(){
+  var bar=qs('homeContext');if(!bar)return;
+  var main=qs('homeContextMain'),sub=qs('homeContextSub'),btn=qs('homeContextBtn');
+  if(ROLE==='player'){
+    var p=activePlayer();
+    if(!p){bar.style.display='none';return;}
+    bar.className='context-bar';
+    main.textContent='Treenid kui '+p.name;
+    sub.textContent=p.pos+(p.age?' · '+p.age+' a':'');
+    if(btn)btn.style.display='none';
+    bar.style.display='flex';
+    return;
+  }
+  if(ST.selPlayer){
+    var cp=ST.players.find(function(p){return p.id===ST.selPlayer;});
+    if(cp){
+      bar.className='context-bar';
+      main.textContent='Kanded salvestatakse: '+cp.name;
+      sub.textContent='Valitud mängija treeningkannete jaoks';
+      if(btn){btn.style.display='';btn.textContent='Vaheta';}
+      bar.style.display='flex';
+      return;
+    }
+  }
+  bar.className='context-bar warn';
+  main.textContent='Mängijat pole valitud';
+  sub.textContent='Vali mängija enne treeningut, et kanded ja AI statistika salvestuksid';
+  if(btn){btn.style.display='';btn.textContent='Vali mängija';}
+  bar.style.display='flex';
+}
+
+function updateHomeTip(){
+  var tip=qs('homeTip');if(!tip)return;
+  try{if(localStorage.getItem(TIP_KEY)) {tip.style.display='none';return;}}catch(e){}
+  tip.style.display=APP.phase==='idle'?'flex':'none';
+}
+
+function dismissHomeTip(){
+  try{localStorage.setItem(TIP_KEY,'1');}catch(e){}
+  hideEl('homeTip');
 }
 
 function renderPlayerPickerList(){
@@ -1101,20 +1217,48 @@ function switchRoleScreen(){
   showEl('roleScreen','flex');
 }
 
-function forgetMyProfile(){
-  setMyStoredPid(null);
-  switchRoleScreen();
+function switchPlayerProfile(){
+  setMyStoredPid(null);CUST_PID=null;
+  hideEl('mainApp');hideEl('roleScreen');
+  renderPlayerPickerList();
+  showEl('playerPickerScreen','flex');
 }
 
-function buildNav(tabs){
-  qs('navTabs').innerHTML=tabs.map(function(t){return '<button class="tab" data-v="'+t.id+'">'+t.l+'</button>';}).join('');
-  qs('navTabs').querySelectorAll('.tab').forEach(function(b){b.addEventListener('click',function(){switchView(b.dataset.v);});});
+function tryAutoResume(){
+  var last=null;
+  try{last=localStorage.getItem(ROLE_KEY);}catch(e){}
+  if(last==='player'){
+    var pid=myStoredPid();
+    if(pid&&ST.players.find(function(p){return p.id===pid;})){
+      CUST_PID=pid;selectRole('player');return true;
+    }
+  }
+  if(last==='coach'){selectRole('coach');return true;}
+  return false;
 }
+
+function buildNav(tabs,moreTabs){
+  var html=tabs.map(function(t){return '<button class="tab" data-v="'+t.id+'">'+t.l+'</button>';}).join('');
+  qs('navTabs').innerHTML=html;
+  qs('navTabs').querySelectorAll('.tab').forEach(function(b){b.addEventListener('click',function(){switchView(b.dataset.v);closeNavMore();});});
+  var moreWrap=qs('navMoreWrap'),moreMenu=qs('navMoreMenu');
+  if(moreTabs&&moreTabs.length&&moreWrap&&moreMenu){
+    moreWrap.style.display='';
+    moreMenu.innerHTML=moreTabs.map(function(t){return '<button class="tab" data-v="'+t.id+'">'+t.l+'</button>';}).join('');
+    moreMenu.querySelectorAll('.tab').forEach(function(b){b.addEventListener('click',function(){switchView(b.dataset.v);closeNavMore();});});
+  }else if(moreWrap){moreWrap.style.display='none';}
+}
+
+function toggleNavMore(){
+  var menu=qs('navMoreMenu');if(menu)menu.classList.toggle('open');
+}
+function closeNavMore(){var menu=qs('navMoreMenu');if(menu)menu.classList.remove('open');}
 
 function switchView(n){
+  closeNavMore();
   document.querySelectorAll('.view').forEach(function(v){v.classList.remove('on');});
   var el=qs('view-'+n);if(el)el.classList.add('on');
-  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('on',t.dataset.v===n);});
+  document.querySelectorAll('#navTabs .tab, #navMoreMenu .tab').forEach(function(t){t.classList.toggle('on',t.dataset.v===n);});
   if(n==='drills')renderAllDrills();
   if(n==='players'){renderPlayers();closeDetail();}
   if(n==='exercises')renderExManage();
@@ -1172,6 +1316,7 @@ function renderPlayers(){
 
 function openPDetail(id){
   ST.selPlayer=id;lsSave();
+  renderHomeContext();
   var p=ST.players.find(function(x){return x.id===id;});if(!p)return;
   var ss=ST.sessions.filter(function(s){return s.pid===id;}).sort(function(a,b){return b.date.localeCompare(a.date);});
   var mins=ss.reduce(function(a,s){return a+(+s.dur||0);},0);
@@ -1730,11 +1875,32 @@ function deleteTraining(id){
 function renderLeaderboard(){
   updateProgress();
   populatePlanPlayerSel();
+  var title=qs('lbPageTitle');
+  var playersTitle=qs('lbPlayersTitle');
+  var playersSection=qs('lbPlayersSection');
+  if(title)title.textContent=ROLE==='player'?'📈 Sinu areng':'🏆 Edetabel & saavutused';
+  if(playersTitle)playersTitle.textContent=ROLE==='player'?'Meeskonna edetabel':'Mängijate edetabel';
   var el=qs('lbRows');if(!el)return;
-  if(!ST.players.length){el.innerHTML='<div style="text-align:center;padding:30px 0;color:var(--mu)"><div style="font-size:28px;margin-bottom:8px">🏆</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase">Lisa mängijaid edetabeli nägemiseks</div></div>';return;}
+  if(!ST.players.length){el.innerHTML='<div style="text-align:center;padding:30px 0;color:var(--mu)"><div style="font-size:28px;margin-bottom:8px">🏆</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase">'+(ROLE==='player'?'Alusta treenimist, et näha oma arengut':'Lisa mängijaid edetabeli nägemiseks')+'</div></div>';return;}
   var rows=ST.players.map(function(p){var ss=ST.sessions.filter(function(s){return s.pid===p.id;});return{p:p,n:ss.length,min:ss.reduce(function(a,s){return a+(+s.dur||0);},0),badges:calcBadges(p.id)};}).sort(function(a,b){return b.min-a.min;});
+  var myPid=activePlayerId();
   var rankColors=['var(--or)','#B4B2A9','#D85A30'];
-  el.innerHTML=rows.map(function(r,i){return '<div class="lbrow"><div class="lbrank" style="color:'+(rankColors[i]||'var(--di)')+'">'+( i+1)+'</div><div class="lbav" style="background:'+r.p.color+'22;color:'+r.p.color+'">'+ini(r.p.name)+'</div><div class="lbinfo"><div class="lbname">'+r.p.name+'</div><div class="lbsub">'+r.p.pos+' · '+r.badges.length+' saavutust · '+r.badges.slice(0,3).map(function(bid){var b=BADGES.find(function(x){return x.id===bid;});return b?b.icon:'';}).join(' ')+'</div></div><div class="lbscore"><div class="lbnum">'+Math.round(r.min/60*10)/10+'h</div><div class="lblbl">'+r.n+' kannet</div></div></div>';}).join('');
+  function rowHtml(r,rank,highlight){
+    var style=highlight?' style="border:1px solid rgba(255,107,26,.35);background:rgba(255,107,26,.06);border-radius:10px;margin-bottom:10px"':'';
+    return '<div class="lbrow"'+style+'><div class="lbrank" style="color:'+(rankColors[rank-1]||'var(--di)')+'">'+rank+'</div><div class="lbav" style="background:'+r.p.color+'22;color:'+r.p.color+'">'+ini(r.p.name)+'</div><div class="lbinfo"><div class="lbname">'+r.p.name+(highlight?' (sina)':'')+'</div><div class="lbsub">'+r.p.pos+' · '+r.badges.length+' saavutust · '+r.badges.slice(0,3).map(function(bid){var b=BADGES.find(function(x){return x.id===bid;});return b?b.icon:'';}).join(' ')+'</div></div><div class="lbscore"><div class="lbnum">'+Math.round(r.min/60*10)/10+'h</div><div class="lblbl">'+r.n+' kannet</div></div></div>';
+  }
+  var html='';
+  if(ROLE==='player'&&myPid){
+    var meIdx=rows.findIndex(function(r){return r.p.id===myPid;});
+    if(meIdx>=0){
+      html+=rowHtml(rows[meIdx],meIdx+1,true);
+      if(rows.length>1)html+='<div style="font-size:11px;color:var(--di);margin:8px 0 6px">Ülejäänud meeskond</div>';
+    }
+    rows.forEach(function(r,i){if(r.p.id!==myPid)html+=rowHtml(r,i+1,false);});
+  }else{
+    rows.forEach(function(r,i){html+=rowHtml(r,i+1,false);});
+  }
+  el.innerHTML=html;
   var lbS=qs('lbStats');if(lbS)lbS.innerHTML='<div class="sc"><div class="scn">'+ST.players.length+'</div><div class="scl">Mängijat</div></div><div class="sc"><div class="scn">'+ST.sessions.length+'</div><div class="scl">Kanded kokku</div></div><div class="sc"><div class="scn">'+Math.round(ST.sessions.reduce(function(a,s){return a+(+s.dur||0);},0)/60)+'h</div><div class="scl">Treenitud kokku</div></div><div class="sc"><div class="scn">'+(ST.globalSessions||[]).length+'</div><div class="scl">Harjutust tehtud</div></div>';
   renderHistogram();
   renderDevPlan();
@@ -1747,6 +1913,8 @@ function renderLeaderboard(){
 // ═══════════════════════════════════════════
 function updateProgress(){
   var gs=ST.globalSessions||[];var allS=ST.sessions||[];
+  var pid=activePlayerId();
+  if(ROLE==='player'&&pid)allS=allS.filter(function(s){return s.pid===pid;});
   var today=new Date().toISOString().split('T')[0];
   var dates=Array.from(new Set(gs.map(function(s){return s.date;}))).sort();
   var streak=0;
@@ -2129,7 +2297,7 @@ function saveGoal(){
 // ═══════════════════════════════════════════
 //  HOME — THREE-COL TRAINER
 // ═══════════════════════════════════════════
-var APP={cD:0,cS:1,tL:0,run:false,tI:null,aI:null,aIdx:0,sIdx:0,phase:'idle',list:null};
+var APP={cD:0,cS:1,tL:0,run:false,tI:null,aI:null,aIdx:0,sIdx:0,phase:'idle',list:null,workoutAIStats:[]};
 
 function homeList(){
   if(!APP.list) APP.list=activeDrills();
@@ -2151,6 +2319,7 @@ var curHomeCard=null,curHomeDrill=null;
 function initHome(){
   renderWeekGrid();updateProgress();
   renderHomeDrillList();renderHomeDrillDetail(APP.cD);renderHomeAI(homeList()[APP.cD]);
+  renderHomeContext();updateHomeTip();
 }
 
 function renderWeekGrid(){
@@ -2204,7 +2373,7 @@ function renderHomeDrillDetail(idx){
     var sh='',eh='';
     for(var i=0;i<(d.steps||[]).length;i++) sh+='<div class="srow"><span class="snum">'+(i+1)+'</span>'+d.steps[i]+'</div>';
     for(var i=0;i<(d.errors||[]).length;i++) eh+='<div class="wrow werr">'+d.errors[i]+'</div>';
-    el.innerHTML='<div class="ptitle">'+d.name+'</div><div class="psub">'+d.desc+'</div><div class="pills"><span class="pill or">'+d.lv+'</span><span class="pill">'+d.sets+' × '+d.setDur+'s</span><span class="pill">'+d.dur+'</span></div><div class="div"></div><div class="stl">Sammud</div>'+sh+(eh?'<div style="margin-top:10px" class="div"></div><div class="stl">Levinud vead</div>'+eh:'');
+    el.innerHTML='<div class="ptitle">'+d.name+'</div><div class="psub">'+d.desc+'</div><div class="pills"><span class="pill or">'+d.lv+'</span><span class="pill">'+d.sets+' × '+d.setDur+'s</span><span class="pill">'+d.dur+'</span></div><div class="infobox" style="margin:12px 0;border-left-color:var(--or)">Valmis alustama? Vajuta ülal <strong>Alusta treeningut</strong> — taimer ja AI analüüs käivituvad automaatselt.</div><div class="div"></div><div class="stl">Sammud</div>'+sh+(eh?'<div style="margin-top:10px" class="div"></div><div class="stl">Levinud vead</div>'+eh:'');
     return;
   }
   if(APP.phase==='done'){renderResult();return;}
@@ -2239,9 +2408,20 @@ function renderHomeAI(d){
 function renderResult(){
   var el=qs('hCenterPane');if(!el)return;
   var totMin=Math.round(homeList().reduce(function(a,d){return a+d.sets*d.setDur+(d.sets>1?(d.sets-1)*d.rest:0);},0)/60);
+  var agg=aggregateWorkoutAI(APP.workoutAIStats||[]);
+  var aiScore=agg&&agg.avgScore!==null?agg.avgScore+'%':'—';
+  var tipsHtml='';
+  if(agg&&agg.tips.length){
+    agg.tips.forEach(function(t){tipsHtml+='<div class="wrow '+(t.ok?'wok':'whi')+'">'+t.text+'</div>';});
+  }else if(APP.workoutAIStats&&APP.workoutAIStats.length){
+    tipsHtml='<div class="wrow whi">Kaamera AI andmed salvestatud — vaata kandeid mängija profiilis.</div>';
+  }else{
+    tipsHtml='<div class="wrow whi">AI statistika puudub — lülita treeningu ajal kaamera sisse palli ja asendi jälgimiseks.</div>';
+  }
   el.innerHTML='<div class="fbanner"><div class="ficon">🏆</div><div><div class="ft">Treening lõpetatud!</div><div class="fs">'+homeList().length+' harjutust · salvestatud</div></div></div>'
-    +'<div class="resgrid"><div class="rescard"><div class="reslbl">Harjutused</div><div class="resval">'+homeList().length+'</div></div><div class="rescard"><div class="reslbl">Aeg</div><div class="resval">'+totMin+' min</div></div><div class="rescard"><div class="reslbl">Seeriad</div><div class="resval">'+homeList().reduce(function(a,d){return a+d.sets;},0)+'</div></div><div class="rescard"><div class="reslbl">AI skoor</div><div class="resval">91%</div></div></div>'
-    +'<div class="div"></div><div class="stl">AI soovitused</div><div class="wrow wok">Põrgatuse rütm on oluliselt paranenud!</div><div class="wrow whi">Defensive Slides: reaktsiooniaeg vajab treeningut</div><div class="wrow wok">Kehaasend kõigis harjutustes — 93%</div>';
+    +'<div class="resgrid"><div class="rescard"><div class="reslbl">Harjutused</div><div class="resval">'+homeList().length+'</div></div><div class="rescard"><div class="reslbl">Aeg</div><div class="resval">'+totMin+' min</div></div><div class="rescard"><div class="reslbl">Seeriad</div><div class="resval">'+homeList().reduce(function(a,d){return a+d.sets;},0)+'</div></div><div class="rescard"><div class="reslbl">AI skoor</div><div class="resval">'+aiScore+'</div></div></div>'
+    +(agg&&agg.totalBounces?'<div class="resgrid" style="margin-top:8px"><div class="rescard"><div class="reslbl">Põrgatused</div><div class="resval">'+agg.totalBounces+'</div></div><div class="rescard"><div class="reslbl">Keskmine rütm</div><div class="resval">'+(agg.avgRhythm?agg.avgRhythm+'s':'—')+'</div></div></div>':'')
+    +'<div class="div"></div><div class="stl">AI soovitused</div>'+tipsHtml;
 }
 
 // ── TIMER LOGIC ──
@@ -2254,6 +2434,7 @@ function tick(){
 }
 function startSet(){
   APP.phase='active';var d=homeList()[APP.cD];APP.tL=d.setDur;APP.sIdx=0;APP.run=true;
+  if(AI.active)resetBallTracker();
   setPillH('active');renderHomeDrillDetail(APP.cD);renderHomeDrillList();startLiveAI();
   clearInterval(APP.tI);APP.tI=setInterval(tick,1000);
 }
@@ -2265,12 +2446,14 @@ function startRest(){
 function nextDrill(){
   stopLiveAI();hideEl('hLiveBadge');
   var d=homeList()[APP.cD];
-  ST.globalSessions.push({date:new Date().toISOString().split('T')[0],drillId:d.id,ts:Date.now()});
+  var aiSnap=captureDrillAIStats();
+  if(aiSnap)APP.workoutAIStats.push(aiSnap);
+  ST.globalSessions.push({date:new Date().toISOString().split('T')[0],drillId:d.id,ts:Date.now(),ai:aiSnap||null});
   // also log a real session record for the active player, so XP/badges trigger from actual play
   var activePid=ROLE==='coach'?ST.selPlayer:(CUST_PID||ST.selPlayer);
   if(activePid){
     var beforeBadges=calcBadges(activePid);
-    ST.sessions.push({id:Date.now().toString()+'_'+APP.cD,pid:activePid,drill:d.name,dur:Math.round((d.sets*d.setDur+(d.sets>1?(d.sets-1)*d.rest:0))/60)||1,date:new Date().toISOString().split('T')[0],int:'keskmine',notes:'',synced:false});
+    ST.sessions.push({id:Date.now().toString()+'_'+APP.cD,pid:activePid,drill:d.name,dur:Math.round((d.sets*d.setDur+(d.sets>1?(d.sets-1)*d.rest:0))/60)||1,date:new Date().toISOString().split('T')[0],int:'keskmine',notes:formatAINotes(aiSnap),ai:aiSnap||null,synced:false});
     var afterBadges=calcBadges(activePid);
     var newBadges=afterBadges.filter(function(b){return beforeBadges.indexOf(b)===-1;});
     window._pendingBadgeQueue=(window._pendingBadgeQueue||[]).concat(newBadges);
@@ -2295,9 +2478,130 @@ var PILL_MAP={idle:['sp0','Ootel'],active:['sp1','Aktiivne'],rest:['sp2','Puhkep
 function setPillH(s){var p=qs('pill');if(!p)return;var m=PILL_MAP[s];p.className='spill '+m[0];p.textContent=m[1];}
 
 // ═══════════════════════════════════════════
-//  REAL AI — MediaPipe Pose Estimation
+//  REAL AI — MediaPipe Pose + Ball Tracking
 // ═══════════════════════════════════════════
-var AI={pose:null,cam:null,video:null,active:false,frameId:null};
+var AI={pose:null,cam:null,video:null,active:false,frameId:null,ball:null,poseSamples:[]};
+
+function resetBallTracker(){
+  AI.ball={lastY:null,wasFalling:false,wasRising:false,bounces:0,bounceTimes:[],lastBounceAt:0,heights:[],peakY:null,valleyY:null,detectedFrames:0,x:null,y:null,confidence:0};
+  AI.poseSamples=[];
+}
+
+function detectBall(imageData,landmarks){
+  var data=imageData.data,w=imageData.width,h=imageData.height;
+  var yMin=0,yMax=1;
+  if(landmarks&&landmarks[15]&&landmarks[16]){
+    var wristY=Math.max(landmarks[15].y,landmarks[16].y);
+    yMin=Math.max(0,wristY-0.3);yMax=Math.min(1,wristY+0.4);
+  }
+  var step=3,sumX=0,sumY=0,count=0;
+  for(var y=0;y<h;y+=step){
+    var ny=y/h;if(ny<yMin||ny>yMax)continue;
+    for(var x=0;x<w;x+=step){
+      var i=(y*w+x)*4,r=data[i],g=data[i+1],b=data[i+2];
+      if(r>130&&g>45&&g<210&&b<110&&r>g*1.1&&r>b*1.4){
+        sumX+=x;sumY+=y;count++;
+      }
+    }
+  }
+  if(count<20)return null;
+  return{x:sumX/count/w,y:sumY/count/h,confidence:Math.min(100,Math.round(count/3))};
+}
+
+function updateBallTracker(ball,landmarks){
+  if(!AI.ball)resetBallTracker();
+  if(!ball){return;}
+  AI.ball.detectedFrames++;
+  AI.ball.x=ball.x;AI.ball.y=ball.y;AI.ball.confidence=ball.confidence;
+  var now=performance.now(),y=ball.y;
+  if(AI.ball.lastY!==null){
+    var vy=y-AI.ball.lastY;
+    if(AI.ball.wasFalling&&vy<-0.0015){
+      if(!AI.ball.lastBounceAt||now-AI.ball.lastBounceAt>140){
+        if(AI.ball.lastBounceAt)AI.ball.bounceTimes.push(now-AI.ball.lastBounceAt);
+        AI.ball.bounces++;
+        AI.ball.lastBounceAt=now;
+        if(AI.ball.peakY!==null){
+          var hNorm=Math.max(0,AI.ball.valleyY!==null?AI.ball.valleyY-AI.ball.peakY:y-AI.ball.peakY);
+          if(hNorm>0.01)AI.ball.heights.push(hNorm);
+        }
+        AI.ball.peakY=null;
+      }
+    }
+    if(vy<-0.001)AI.ball.wasRising=true;
+    else if(vy>0.001){AI.ball.wasRising=false;AI.ball.wasFalling=true;}
+    if(AI.ball.wasRising&&(AI.ball.peakY===null||y<AI.ball.peakY))AI.ball.peakY=y;
+    if(AI.ball.wasFalling&&(AI.ball.valleyY===null||y>AI.ball.valleyY))AI.ball.valleyY=y;
+  }
+  AI.ball.lastY=y;
+}
+
+function drawBallMarker(ctx,ball,cw,ch){
+  var x=ball.x*cw,y=ball.y*ch;
+  ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);
+  ctx.strokeStyle='rgba(99,199,77,0.95)';ctx.lineWidth=2;ctx.stroke();
+  ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);
+  ctx.fillStyle='rgba(99,199,77,0.7)';ctx.fill();
+}
+
+function captureDrillAIStats(){
+  if(!AI.active)return null;
+  if(!AI.ball)resetBallTracker();
+  var b=AI.ball;
+  if(!b.detectedFrames&&!AI.poseSamples.length)return null;
+  var rhythm=b.bounceTimes.length?Math.round(b.bounceTimes.reduce(function(a,t){return a+t;},0)/b.bounceTimes.length)/1000:0;
+  var avgH=b.heights.length?Math.round(b.heights.reduce(function(a,h){return a+h;},0)/b.heights.length*240):0;
+  var pose=AI.poseSamples.length?AI.poseSamples[AI.poseSamples.length-1]:{};
+  var stanceScore=pose.shoulderSym||0;
+  var kneeOk=pose.lKnee&&pose.rKnee?((pose.lKnee+pose.rKnee)/2>=100&&(pose.lKnee+pose.rKnee)/2<=155):false;
+  var score=Math.round(Math.min(100,
+    (b.detectedFrames>10?25:0)+
+    (b.bounces>0?Math.min(35,b.bounces):0)+
+    (rhythm>0&&rhythm<0.8?20:rhythm>0?10:0)+
+    (stanceScore>75?20:stanceScore>50?10:0)+
+    (kneeOk?10:0)
+  ));
+  return{
+    bounces:b.bounces,
+    rhythm:rhythm,
+    heightCm:avgH,
+    stance:stanceScore,
+    score:score,
+    detectedFrames:b.detectedFrames,
+    drillId:homeList()[APP.cD]?homeList()[APP.cD].id:null,
+    drillName:homeList()[APP.cD]?homeList()[APP.cD].name:null
+  };
+}
+
+function formatAINotes(ai){
+  if(!ai)return'';
+  var parts=[];
+  if(ai.bounces)parts.push(ai.bounces+' põrgatust');
+  if(ai.rhythm)parts.push('rütm '+ai.rhythm.toFixed(2)+'s');
+  if(ai.heightCm)parts.push('kõrgus ~'+ai.heightCm+'cm');
+  if(ai.score)parts.push('AI skoor '+ai.score+'%');
+  return parts.length?'AI: '+parts.join(', '):'';
+}
+
+function aggregateWorkoutAI(stats){
+  if(!stats||!stats.length)return null;
+  var totalBounces=0,scores=[],rhythms=[],tips=[];
+  stats.forEach(function(s){
+    totalBounces+=s.bounces||0;
+    if(s.score)scores.push(s.score);
+    if(s.rhythm)rhythms.push(s.rhythm);
+    if(s.bounces>=10&&s.rhythm&&s.rhythm<0.55)tips.push({ok:true,text:(s.drillName||'Harjutus')+': hea põrgatuse rütm ('+s.rhythm.toFixed(2)+'s)'});
+    else if(s.bounces>0&&s.rhythm&&s.rhythm>0.75)tips.push({ok:false,text:(s.drillName||'Harjutus')+': rütm aeglane — proovi kiirendada'});
+    if(s.stance&&s.stance<70)tips.push({ok:false,text:(s.drillName||'Harjutus')+': tasakaal vajab tähelepanu ('+s.stance+'%)'});
+    else if(s.stance>=85)tips.push({ok:true,text:(s.drillName||'Harjutus')+': stabiilne kehaasend ('+s.stance+'%)'});
+  });
+  return{
+    avgScore:scores.length?Math.round(scores.reduce(function(a,b){return a+b;},0)/scores.length):null,
+    totalBounces:totalBounces,
+    avgRhythm:rhythms.length?Math.round(rhythms.reduce(function(a,b){return a+b;},0)/rhythms.length*100)/100:0,
+    tips:tips.slice(0,4)
+  };
+}
 
 function toDeg(rad){return Math.round(rad*180/Math.PI);}
 
@@ -2347,6 +2651,10 @@ function analyzePose(lm){
     // Body visibility confidence
     var vis=[L[11],L[12],L[23],L[24],L[25],L[26]].reduce(function(a,p){return a+p.visibility;},0)/6;
     results.confidence=Math.round(vis*100);
+    if(AI.active&&APP.phase==='active'){
+      AI.poseSamples.push(results);
+      if(AI.poseSamples.length>120)AI.poseSamples.shift();
+    }
   }catch(e){}
   return results;
 }
@@ -2378,13 +2686,28 @@ function poseResultsToFeed(poseData,drillTc){
     var kOk=poseData.rKnee>=100&&poseData.rKnee<=150;
     feed.push({n:'Põlv (vis)',v:poseData.rKnee+'°',tr:kOk?'Hea':'Painuta rohkem',tc:kOk?'tup':'tne'});
   } else {
-    // Ball control / default — general stance
+    // Ball control — stance + live ball tracking
     var avgK=Math.round((poseData.lKnee+poseData.rKnee)/2);
     var kOk2=avgK>=100&&avgK<=155;
     feed.push({n:'Põlvede nurk',v:avgK+'°',tr:kOk2?'Hea':'Painuta põlvi',tc:kOk2?'tup':'tne'});
     var tOk=poseData.trunkAngle<20;
     feed.push({n:'Keha asend',v:poseData.trunkAngle+'°',tr:tOk?'Püsti':'Kummardad liiga',tc:tOk?'tup':'tne'});
     feed.push({n:'Tasakaal',v:poseData.shoulderSym+'%',tr:poseData.shoulderSym>80?'Stabiilne':'Hoia tasakaalu',tc:poseData.shoulderSym>80?'tup':'tne'});
+    var b=AI.ball||{};
+    if(b.detectedFrames>5){
+      feed.push({n:'Palli asend',v:b.x!==null?Math.round(b.x*100)+'% / '+Math.round(b.y*100)+'%':'—',tr:b.confidence>40?'Jälgin palli':'Otsi oranži palli',tc:b.confidence>40?'tup':'tne'});
+      feed.push({n:'Põrgatused',v:String(b.bounces||0),tr:(b.bounces||0)>0?'Loendan':'Palli ei näe',tc:(b.bounces||0)>0?'tup':'tne'});
+      if(b.bounceTimes.length){
+        var rhy=Math.round(b.bounceTimes.reduce(function(a,t){return a+t;},0)/b.bounceTimes.length)/1000;
+        feed.push({n:'Rütm',v:rhy.toFixed(2)+' s',tr:rhy<0.6?'Kiire':'Ühtlane',tc:rhy<0.75?'tup':'tne'});
+      }
+      if(b.heights.length){
+        var ah=Math.round(b.heights.reduce(function(a,h){return a+h;},0)/b.heights.length*240);
+        feed.push({n:'Põrgatuse kõrgus',v:'~'+ah+' cm',tr:ah<30?'Alla põlve':'Kontrolli kõrgust',tc:ah<35?'tup':'tne'});
+      }
+    }else{
+      feed.push({n:'Pall',v:'Otsin...',tr:'Hoia oranži pall kaameras',tc:'tne'});
+    }
   }
   feed.push({n:'Tuvastus',v:conf+'%',tr:conf>70?'Selge vaade':'Astu kaamera ette',tc:conf>70?'tup':'tne'});
   return feed;
@@ -2414,9 +2737,17 @@ function initMediaPipe(){
         drawConnectors(ctx,results.poseLandmarks,POSE_CONNECTIONS,{color:'rgba(255,107,26,0.7)',lineWidth:2});
         drawLandmarks(ctx,results.poseLandmarks,{color:'#FF6B1A',lineWidth:1,radius:3});
         var poseData=analyzePose(results.poseLandmarks);
+        if(APP.phase==='active'){
+          var ballData=detectBall(ctx.getImageData(0,0,canvas.width,canvas.height),results.poseLandmarks);
+          updateBallTracker(ballData,results.poseLandmarks);
+          if(ballData)drawBallMarker(ctx,ballData,canvas.width,canvas.height);
+        }
         updateAIFeed(poseData);
         var statusEl=qs('aiCamStatus');
-        if(statusEl)statusEl.textContent='\u2022 AI j\u00e4lgib \u2014 '+( poseData.confidence||0)+'%';
+        if(statusEl){
+          var ballTxt=AI.ball&&AI.ball.bounces?(' · 🏀 '+AI.ball.bounces):'';
+          statusEl.textContent='\u2022 AI j\u00e4lgib \u2014 '+(poseData.confidence||0)+'%'+ballTxt;
+        }
       }
       ctx.restore();
     });
@@ -2441,7 +2772,7 @@ async function startCameraAI(){
     await AI.video.play();
     if(wrap)wrap.style.display='';
     if(btn){btn.textContent='\ud83d\udcf7 Kaamera v\u00e4lja';btn.disabled=false;btn.style.background='rgba(226,75,74,.15)';btn.style.color='var(--rd)';}
-    AI.active=true;AI.stream=stream;
+    AI.active=true;AI.stream=stream;resetBallTracker();
     var sendFrame=async function(){
       if(!AI.active)return;
       if(AI.video.readyState>=2){await AI.pose.send({image:AI.video});}
@@ -2513,19 +2844,25 @@ function startLiveAI(){
 function stopLiveAI(){clearInterval(APP.aI);}
 
 function startWorkout(){
+  if(ROLE==='coach'&&!ST.selPlayer){
+    toast('Vali kõigepealt mängija','warn');
+    renderHomeContext();
+    switchView('players');
+    return;
+  }
   clearInterval(APP.tI);clearInterval(APP.aI);
   APP.list=priorityOrderedDrills();
-  APP.cD=0;APP.cS=1;APP.sIdx=0;APP.aIdx=0;
+  APP.cD=0;APP.cS=1;APP.sIdx=0;APP.aIdx=0;APP.workoutAIStats=[];
   var sb=qs('hStartBtn');sb.disabled=true;sb.textContent='Käib...';
-  showEl('hResetBtn','inline-flex');renderHomeDrillList();startSet();
+  showEl('hResetBtn','inline-flex');hideEl('homeTip');renderHomeDrillList();startSet();
 }
 function resetWorkout(){
   clearInterval(APP.tI);clearInterval(APP.aI);
-  APP.phase='idle';APP.cD=0;APP.cS=1;APP.run=false;APP.sIdx=0;APP.aIdx=0;
+  APP.phase='idle';APP.cD=0;APP.cS=1;APP.run=false;APP.sIdx=0;APP.aIdx=0;APP.workoutAIStats=[];
   APP.list=activeDrills();
   setPillH('idle');var sb=qs('hStartBtn');sb.disabled=false;sb.textContent='▶ Alusta treeningut';
   hideEl('hResetBtn');hideEl('hLiveBadge');qs('hAIHint').textContent='Reaalajas';
-  renderHomeDrillList();renderHomeDrillDetail(0);renderHomeAI(homeList()[0]);
+  renderHomeDrillList();renderHomeDrillDetail(0);renderHomeAI(homeList()[0]);updateHomeTip();
 }
 
 // ═══════════════════════════════════════════
@@ -2601,6 +2938,11 @@ try{
 qs('rCoach').addEventListener('click',function(){selectRole('coach');});
 qs('rPlayer').addEventListener('click',function(){openPlayerPicker();});
 qs('swBtn').addEventListener('click',switchRoleScreen);
+qs('swPlayerBtn').addEventListener('click',switchPlayerProfile);
+qs('navMoreBtn').addEventListener('click',function(e){e.stopPropagation();toggleNavMore();});
+document.addEventListener('click',function(){closeNavMore();});
+qs('homeTipClose').addEventListener('click',dismissHomeTip);
+qs('homeContextBtn').addEventListener('click',function(){switchView('players');});
 qs('ppBackBtn').addEventListener('click',closePlayerPicker);
 qs('ppCreateBtn').addEventListener('click',openPlayerCreate);
 qs('pcBackBtn').addEventListener('click',closePlayerCreate);
@@ -2668,6 +3010,7 @@ qs('hcPassword').addEventListener('keydown',function(e){if(e.key==='Enter')submi
 qs('hcModal').addEventListener('click',function(e){if(e.target===qs('hcModal'))closeHeadCoachModal();});
 
 lsLoad();
+if(!tryAutoResume()){/* role screen stays visible */}
 scheduleMidnightRefresh();
 if(ST.gsUrl){pullFromSheets(true).then(function(){refreshAllViewsAfterSync();});}
 }catch(err){console.error('Init error:',err);}
