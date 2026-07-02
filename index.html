@@ -2129,7 +2129,7 @@ function saveGoal(){
 // ═══════════════════════════════════════════
 //  HOME — THREE-COL TRAINER
 // ═══════════════════════════════════════════
-var APP={cD:0,cS:1,tL:0,run:false,tI:null,aI:null,aIdx:0,sIdx:0,phase:'idle',list:null};
+var APP={cD:0,cS:1,tL:0,run:false,tI:null,aI:null,aIdx:0,sIdx:0,phase:'idle',list:null,workoutAIStats:[]};
 
 function homeList(){
   if(!APP.list) APP.list=activeDrills();
@@ -2239,9 +2239,20 @@ function renderHomeAI(d){
 function renderResult(){
   var el=qs('hCenterPane');if(!el)return;
   var totMin=Math.round(homeList().reduce(function(a,d){return a+d.sets*d.setDur+(d.sets>1?(d.sets-1)*d.rest:0);},0)/60);
+  var agg=aggregateWorkoutAI(APP.workoutAIStats||[]);
+  var aiScore=agg&&agg.avgScore!==null?agg.avgScore+'%':'—';
+  var tipsHtml='';
+  if(agg&&agg.tips.length){
+    agg.tips.forEach(function(t){tipsHtml+='<div class="wrow '+(t.ok?'wok':'whi')+'">'+t.text+'</div>';});
+  }else if(APP.workoutAIStats&&APP.workoutAIStats.length){
+    tipsHtml='<div class="wrow whi">Kaamera AI andmed salvestatud — vaata kandeid mängija profiilis.</div>';
+  }else{
+    tipsHtml='<div class="wrow whi">AI statistika puudub — lülita treeningu ajal kaamera sisse palli ja asendi jälgimiseks.</div>';
+  }
   el.innerHTML='<div class="fbanner"><div class="ficon">🏆</div><div><div class="ft">Treening lõpetatud!</div><div class="fs">'+homeList().length+' harjutust · salvestatud</div></div></div>'
-    +'<div class="resgrid"><div class="rescard"><div class="reslbl">Harjutused</div><div class="resval">'+homeList().length+'</div></div><div class="rescard"><div class="reslbl">Aeg</div><div class="resval">'+totMin+' min</div></div><div class="rescard"><div class="reslbl">Seeriad</div><div class="resval">'+homeList().reduce(function(a,d){return a+d.sets;},0)+'</div></div><div class="rescard"><div class="reslbl">AI skoor</div><div class="resval">91%</div></div></div>'
-    +'<div class="div"></div><div class="stl">AI soovitused</div><div class="wrow wok">Põrgatuse rütm on oluliselt paranenud!</div><div class="wrow whi">Defensive Slides: reaktsiooniaeg vajab treeningut</div><div class="wrow wok">Kehaasend kõigis harjutustes — 93%</div>';
+    +'<div class="resgrid"><div class="rescard"><div class="reslbl">Harjutused</div><div class="resval">'+homeList().length+'</div></div><div class="rescard"><div class="reslbl">Aeg</div><div class="resval">'+totMin+' min</div></div><div class="rescard"><div class="reslbl">Seeriad</div><div class="resval">'+homeList().reduce(function(a,d){return a+d.sets;},0)+'</div></div><div class="rescard"><div class="reslbl">AI skoor</div><div class="resval">'+aiScore+'</div></div></div>'
+    +(agg&&agg.totalBounces?'<div class="resgrid" style="margin-top:8px"><div class="rescard"><div class="reslbl">Põrgatused</div><div class="resval">'+agg.totalBounces+'</div></div><div class="rescard"><div class="reslbl">Keskmine rütm</div><div class="resval">'+(agg.avgRhythm?agg.avgRhythm+'s':'—')+'</div></div></div>':'')
+    +'<div class="div"></div><div class="stl">AI soovitused</div>'+tipsHtml;
 }
 
 // ── TIMER LOGIC ──
@@ -2254,6 +2265,7 @@ function tick(){
 }
 function startSet(){
   APP.phase='active';var d=homeList()[APP.cD];APP.tL=d.setDur;APP.sIdx=0;APP.run=true;
+  if(AI.active)resetBallTracker();
   setPillH('active');renderHomeDrillDetail(APP.cD);renderHomeDrillList();startLiveAI();
   clearInterval(APP.tI);APP.tI=setInterval(tick,1000);
 }
@@ -2265,12 +2277,14 @@ function startRest(){
 function nextDrill(){
   stopLiveAI();hideEl('hLiveBadge');
   var d=homeList()[APP.cD];
-  ST.globalSessions.push({date:new Date().toISOString().split('T')[0],drillId:d.id,ts:Date.now()});
+  var aiSnap=captureDrillAIStats();
+  if(aiSnap)APP.workoutAIStats.push(aiSnap);
+  ST.globalSessions.push({date:new Date().toISOString().split('T')[0],drillId:d.id,ts:Date.now(),ai:aiSnap||null});
   // also log a real session record for the active player, so XP/badges trigger from actual play
   var activePid=ROLE==='coach'?ST.selPlayer:(CUST_PID||ST.selPlayer);
   if(activePid){
     var beforeBadges=calcBadges(activePid);
-    ST.sessions.push({id:Date.now().toString()+'_'+APP.cD,pid:activePid,drill:d.name,dur:Math.round((d.sets*d.setDur+(d.sets>1?(d.sets-1)*d.rest:0))/60)||1,date:new Date().toISOString().split('T')[0],int:'keskmine',notes:'',synced:false});
+    ST.sessions.push({id:Date.now().toString()+'_'+APP.cD,pid:activePid,drill:d.name,dur:Math.round((d.sets*d.setDur+(d.sets>1?(d.sets-1)*d.rest:0))/60)||1,date:new Date().toISOString().split('T')[0],int:'keskmine',notes:formatAINotes(aiSnap),ai:aiSnap||null,synced:false});
     var afterBadges=calcBadges(activePid);
     var newBadges=afterBadges.filter(function(b){return beforeBadges.indexOf(b)===-1;});
     window._pendingBadgeQueue=(window._pendingBadgeQueue||[]).concat(newBadges);
@@ -2295,9 +2309,130 @@ var PILL_MAP={idle:['sp0','Ootel'],active:['sp1','Aktiivne'],rest:['sp2','Puhkep
 function setPillH(s){var p=qs('pill');if(!p)return;var m=PILL_MAP[s];p.className='spill '+m[0];p.textContent=m[1];}
 
 // ═══════════════════════════════════════════
-//  REAL AI — MediaPipe Pose Estimation
+//  REAL AI — MediaPipe Pose + Ball Tracking
 // ═══════════════════════════════════════════
-var AI={pose:null,cam:null,video:null,active:false,frameId:null};
+var AI={pose:null,cam:null,video:null,active:false,frameId:null,ball:null,poseSamples:[]};
+
+function resetBallTracker(){
+  AI.ball={lastY:null,wasFalling:false,wasRising:false,bounces:0,bounceTimes:[],lastBounceAt:0,heights:[],peakY:null,valleyY:null,detectedFrames:0,x:null,y:null,confidence:0};
+  AI.poseSamples=[];
+}
+
+function detectBall(imageData,landmarks){
+  var data=imageData.data,w=imageData.width,h=imageData.height;
+  var yMin=0,yMax=1;
+  if(landmarks&&landmarks[15]&&landmarks[16]){
+    var wristY=Math.max(landmarks[15].y,landmarks[16].y);
+    yMin=Math.max(0,wristY-0.3);yMax=Math.min(1,wristY+0.4);
+  }
+  var step=3,sumX=0,sumY=0,count=0;
+  for(var y=0;y<h;y+=step){
+    var ny=y/h;if(ny<yMin||ny>yMax)continue;
+    for(var x=0;x<w;x+=step){
+      var i=(y*w+x)*4,r=data[i],g=data[i+1],b=data[i+2];
+      if(r>130&&g>45&&g<210&&b<110&&r>g*1.1&&r>b*1.4){
+        sumX+=x;sumY+=y;count++;
+      }
+    }
+  }
+  if(count<20)return null;
+  return{x:sumX/count/w,y:sumY/count/h,confidence:Math.min(100,Math.round(count/3))};
+}
+
+function updateBallTracker(ball,landmarks){
+  if(!AI.ball)resetBallTracker();
+  if(!ball){return;}
+  AI.ball.detectedFrames++;
+  AI.ball.x=ball.x;AI.ball.y=ball.y;AI.ball.confidence=ball.confidence;
+  var now=performance.now(),y=ball.y;
+  if(AI.ball.lastY!==null){
+    var vy=y-AI.ball.lastY;
+    if(AI.ball.wasFalling&&vy<-0.0015){
+      if(!AI.ball.lastBounceAt||now-AI.ball.lastBounceAt>140){
+        if(AI.ball.lastBounceAt)AI.ball.bounceTimes.push(now-AI.ball.lastBounceAt);
+        AI.ball.bounces++;
+        AI.ball.lastBounceAt=now;
+        if(AI.ball.peakY!==null){
+          var hNorm=Math.max(0,AI.ball.valleyY!==null?AI.ball.valleyY-AI.ball.peakY:y-AI.ball.peakY);
+          if(hNorm>0.01)AI.ball.heights.push(hNorm);
+        }
+        AI.ball.peakY=null;
+      }
+    }
+    if(vy<-0.001)AI.ball.wasRising=true;
+    else if(vy>0.001){AI.ball.wasRising=false;AI.ball.wasFalling=true;}
+    if(AI.ball.wasRising&&(AI.ball.peakY===null||y<AI.ball.peakY))AI.ball.peakY=y;
+    if(AI.ball.wasFalling&&(AI.ball.valleyY===null||y>AI.ball.valleyY))AI.ball.valleyY=y;
+  }
+  AI.ball.lastY=y;
+}
+
+function drawBallMarker(ctx,ball,cw,ch){
+  var x=ball.x*cw,y=ball.y*ch;
+  ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);
+  ctx.strokeStyle='rgba(99,199,77,0.95)';ctx.lineWidth=2;ctx.stroke();
+  ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);
+  ctx.fillStyle='rgba(99,199,77,0.7)';ctx.fill();
+}
+
+function captureDrillAIStats(){
+  if(!AI.active)return null;
+  if(!AI.ball)resetBallTracker();
+  var b=AI.ball;
+  if(!b.detectedFrames&&!AI.poseSamples.length)return null;
+  var rhythm=b.bounceTimes.length?Math.round(b.bounceTimes.reduce(function(a,t){return a+t;},0)/b.bounceTimes.length)/1000:0;
+  var avgH=b.heights.length?Math.round(b.heights.reduce(function(a,h){return a+h;},0)/b.heights.length*240):0;
+  var pose=AI.poseSamples.length?AI.poseSamples[AI.poseSamples.length-1]:{};
+  var stanceScore=pose.shoulderSym||0;
+  var kneeOk=pose.lKnee&&pose.rKnee?((pose.lKnee+pose.rKnee)/2>=100&&(pose.lKnee+pose.rKnee)/2<=155):false;
+  var score=Math.round(Math.min(100,
+    (b.detectedFrames>10?25:0)+
+    (b.bounces>0?Math.min(35,b.bounces):0)+
+    (rhythm>0&&rhythm<0.8?20:rhythm>0?10:0)+
+    (stanceScore>75?20:stanceScore>50?10:0)+
+    (kneeOk?10:0)
+  ));
+  return{
+    bounces:b.bounces,
+    rhythm:rhythm,
+    heightCm:avgH,
+    stance:stanceScore,
+    score:score,
+    detectedFrames:b.detectedFrames,
+    drillId:homeList()[APP.cD]?homeList()[APP.cD].id:null,
+    drillName:homeList()[APP.cD]?homeList()[APP.cD].name:null
+  };
+}
+
+function formatAINotes(ai){
+  if(!ai)return'';
+  var parts=[];
+  if(ai.bounces)parts.push(ai.bounces+' põrgatust');
+  if(ai.rhythm)parts.push('rütm '+ai.rhythm.toFixed(2)+'s');
+  if(ai.heightCm)parts.push('kõrgus ~'+ai.heightCm+'cm');
+  if(ai.score)parts.push('AI skoor '+ai.score+'%');
+  return parts.length?'AI: '+parts.join(', '):'';
+}
+
+function aggregateWorkoutAI(stats){
+  if(!stats||!stats.length)return null;
+  var totalBounces=0,scores=[],rhythms=[],tips=[];
+  stats.forEach(function(s){
+    totalBounces+=s.bounces||0;
+    if(s.score)scores.push(s.score);
+    if(s.rhythm)rhythms.push(s.rhythm);
+    if(s.bounces>=10&&s.rhythm&&s.rhythm<0.55)tips.push({ok:true,text:(s.drillName||'Harjutus')+': hea põrgatuse rütm ('+s.rhythm.toFixed(2)+'s)'});
+    else if(s.bounces>0&&s.rhythm&&s.rhythm>0.75)tips.push({ok:false,text:(s.drillName||'Harjutus')+': rütm aeglane — proovi kiirendada'});
+    if(s.stance&&s.stance<70)tips.push({ok:false,text:(s.drillName||'Harjutus')+': tasakaal vajab tähelepanu ('+s.stance+'%)'});
+    else if(s.stance>=85)tips.push({ok:true,text:(s.drillName||'Harjutus')+': stabiilne kehaasend ('+s.stance+'%)'});
+  });
+  return{
+    avgScore:scores.length?Math.round(scores.reduce(function(a,b){return a+b;},0)/scores.length):null,
+    totalBounces:totalBounces,
+    avgRhythm:rhythms.length?Math.round(rhythms.reduce(function(a,b){return a+b;},0)/rhythms.length*100)/100:0,
+    tips:tips.slice(0,4)
+  };
+}
 
 function toDeg(rad){return Math.round(rad*180/Math.PI);}
 
@@ -2347,6 +2482,10 @@ function analyzePose(lm){
     // Body visibility confidence
     var vis=[L[11],L[12],L[23],L[24],L[25],L[26]].reduce(function(a,p){return a+p.visibility;},0)/6;
     results.confidence=Math.round(vis*100);
+    if(AI.active&&APP.phase==='active'){
+      AI.poseSamples.push(results);
+      if(AI.poseSamples.length>120)AI.poseSamples.shift();
+    }
   }catch(e){}
   return results;
 }
@@ -2378,13 +2517,28 @@ function poseResultsToFeed(poseData,drillTc){
     var kOk=poseData.rKnee>=100&&poseData.rKnee<=150;
     feed.push({n:'Põlv (vis)',v:poseData.rKnee+'°',tr:kOk?'Hea':'Painuta rohkem',tc:kOk?'tup':'tne'});
   } else {
-    // Ball control / default — general stance
+    // Ball control — stance + live ball tracking
     var avgK=Math.round((poseData.lKnee+poseData.rKnee)/2);
     var kOk2=avgK>=100&&avgK<=155;
     feed.push({n:'Põlvede nurk',v:avgK+'°',tr:kOk2?'Hea':'Painuta põlvi',tc:kOk2?'tup':'tne'});
     var tOk=poseData.trunkAngle<20;
     feed.push({n:'Keha asend',v:poseData.trunkAngle+'°',tr:tOk?'Püsti':'Kummardad liiga',tc:tOk?'tup':'tne'});
     feed.push({n:'Tasakaal',v:poseData.shoulderSym+'%',tr:poseData.shoulderSym>80?'Stabiilne':'Hoia tasakaalu',tc:poseData.shoulderSym>80?'tup':'tne'});
+    var b=AI.ball||{};
+    if(b.detectedFrames>5){
+      feed.push({n:'Palli asend',v:b.x!==null?Math.round(b.x*100)+'% / '+Math.round(b.y*100)+'%':'—',tr:b.confidence>40?'Jälgin palli':'Otsi oranži palli',tc:b.confidence>40?'tup':'tne'});
+      feed.push({n:'Põrgatused',v:String(b.bounces||0),tr:(b.bounces||0)>0?'Loendan':'Palli ei näe',tc:(b.bounces||0)>0?'tup':'tne'});
+      if(b.bounceTimes.length){
+        var rhy=Math.round(b.bounceTimes.reduce(function(a,t){return a+t;},0)/b.bounceTimes.length)/1000;
+        feed.push({n:'Rütm',v:rhy.toFixed(2)+' s',tr:rhy<0.6?'Kiire':'Ühtlane',tc:rhy<0.75?'tup':'tne'});
+      }
+      if(b.heights.length){
+        var ah=Math.round(b.heights.reduce(function(a,h){return a+h;},0)/b.heights.length*240);
+        feed.push({n:'Põrgatuse kõrgus',v:'~'+ah+' cm',tr:ah<30?'Alla põlve':'Kontrolli kõrgust',tc:ah<35?'tup':'tne'});
+      }
+    }else{
+      feed.push({n:'Pall',v:'Otsin...',tr:'Hoia oranži pall kaameras',tc:'tne'});
+    }
   }
   feed.push({n:'Tuvastus',v:conf+'%',tr:conf>70?'Selge vaade':'Astu kaamera ette',tc:conf>70?'tup':'tne'});
   return feed;
@@ -2414,9 +2568,17 @@ function initMediaPipe(){
         drawConnectors(ctx,results.poseLandmarks,POSE_CONNECTIONS,{color:'rgba(255,107,26,0.7)',lineWidth:2});
         drawLandmarks(ctx,results.poseLandmarks,{color:'#FF6B1A',lineWidth:1,radius:3});
         var poseData=analyzePose(results.poseLandmarks);
+        if(APP.phase==='active'){
+          var ballData=detectBall(ctx.getImageData(0,0,canvas.width,canvas.height),results.poseLandmarks);
+          updateBallTracker(ballData,results.poseLandmarks);
+          if(ballData)drawBallMarker(ctx,ballData,canvas.width,canvas.height);
+        }
         updateAIFeed(poseData);
         var statusEl=qs('aiCamStatus');
-        if(statusEl)statusEl.textContent='\u2022 AI j\u00e4lgib \u2014 '+( poseData.confidence||0)+'%';
+        if(statusEl){
+          var ballTxt=AI.ball&&AI.ball.bounces?(' · 🏀 '+AI.ball.bounces):'';
+          statusEl.textContent='\u2022 AI j\u00e4lgib \u2014 '+(poseData.confidence||0)+'%'+ballTxt;
+        }
       }
       ctx.restore();
     });
@@ -2441,7 +2603,7 @@ async function startCameraAI(){
     await AI.video.play();
     if(wrap)wrap.style.display='';
     if(btn){btn.textContent='\ud83d\udcf7 Kaamera v\u00e4lja';btn.disabled=false;btn.style.background='rgba(226,75,74,.15)';btn.style.color='var(--rd)';}
-    AI.active=true;AI.stream=stream;
+    AI.active=true;AI.stream=stream;resetBallTracker();
     var sendFrame=async function(){
       if(!AI.active)return;
       if(AI.video.readyState>=2){await AI.pose.send({image:AI.video});}
@@ -2515,13 +2677,13 @@ function stopLiveAI(){clearInterval(APP.aI);}
 function startWorkout(){
   clearInterval(APP.tI);clearInterval(APP.aI);
   APP.list=priorityOrderedDrills();
-  APP.cD=0;APP.cS=1;APP.sIdx=0;APP.aIdx=0;
+  APP.cD=0;APP.cS=1;APP.sIdx=0;APP.aIdx=0;APP.workoutAIStats=[];
   var sb=qs('hStartBtn');sb.disabled=true;sb.textContent='Käib...';
   showEl('hResetBtn','inline-flex');renderHomeDrillList();startSet();
 }
 function resetWorkout(){
   clearInterval(APP.tI);clearInterval(APP.aI);
-  APP.phase='idle';APP.cD=0;APP.cS=1;APP.run=false;APP.sIdx=0;APP.aIdx=0;
+  APP.phase='idle';APP.cD=0;APP.cS=1;APP.run=false;APP.sIdx=0;APP.aIdx=0;APP.workoutAIStats=[];
   APP.list=activeDrills();
   setPillH('idle');var sb=qs('hStartBtn');sb.disabled=false;sb.textContent='▶ Alusta treeningut';
   hideEl('hResetBtn');hideEl('hLiveBadge');qs('hAIHint').textContent='Reaalajas';
